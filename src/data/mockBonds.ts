@@ -23,7 +23,7 @@ const bondStatusNames: Record<BondStatus, string> = {
 // 发行人数据
 export const mockIssuers: Issuer[] = [
   {
-    id: 'issuer_001',
+    id: 'issuerHuaxin',
     issuerName: '华鑫城市建设投资集团有限公司',
     industry: '城市基础设施建设',
     creditRating: 'AAA',
@@ -32,7 +32,7 @@ export const mockIssuers: Issuer[] = [
     legalRepresentative: '张国华'
   },
   {
-    id: 'issuer_002',
+    id: 'issuerMingtai',
     issuerName: '明泰新能源科技股份有限公司',
     industry: '新能源',
     creditRating: 'AA+',
@@ -41,7 +41,7 @@ export const mockIssuers: Issuer[] = [
     legalRepresentative: '李明阳'
   },
   {
-    id: 'issuer_003',
+    id: 'issuerJiangwan',
     issuerName: '江湾交通发展集团有限公司',
     industry: '交通运输',
     creditRating: 'AAA',
@@ -50,7 +50,7 @@ export const mockIssuers: Issuer[] = [
     legalRepresentative: '王建平'
   },
   {
-    id: 'issuer_004',
+    id: 'issuerKechuang',
     issuerName: '科创智能制造有限公司',
     industry: '高端制造',
     creditRating: 'AA',
@@ -63,10 +63,10 @@ export const mockIssuers: Issuer[] = [
 // 债券基本数据
 export const mockBonds: Bond[] = [
   {
-    id: 'bond_001',
+    id: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     bondCode: '2480001.IB',
-    issuerId: 'issuer_001',
+    issuerId: 'issuerHuaxin',
     issuerName: '华鑫城市建设投资集团有限公司',
     bondType: 'enterprise',
     bondTypeName: '企业债',
@@ -84,10 +84,10 @@ export const mockBonds: Bond[] = [
     trustee: '中信证券'
   },
   {
-    id: 'bond_002',
+    id: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     bondCode: '2580002.SH',
-    issuerId: 'issuer_002',
+    issuerId: 'issuerMingtai',
     issuerName: '明泰新能源科技股份有限公司',
     bondType: 'corporate',
     bondTypeName: '公司债',
@@ -105,10 +105,10 @@ export const mockBonds: Bond[] = [
     trustee: '国泰君安证券'
   },
   {
-    id: 'bond_003',
+    id: 'bond26Jiangwan01',
     bondName: '26江湾交通债01',
     bondCode: '2680003.SZ',
-    issuerId: 'issuer_003',
+    issuerId: 'issuerJiangwan',
     issuerName: '江湾交通发展集团有限公司',
     bondType: 'enterprise',
     bondTypeName: '企业债',
@@ -125,10 +125,10 @@ export const mockBonds: Bond[] = [
     trustee: '中金公司'
   },
   {
-    id: 'bond_004',
+    id: 'bond25Kechuang01',
     bondName: '25科创智造债01',
     bondCode: '2580004.IB',
-    issuerId: 'issuer_004',
+    issuerId: 'issuerKechuang',
     issuerName: '科创智能制造有限公司',
     bondType: 'corporate',
     bondTypeName: '公司债',
@@ -145,10 +145,10 @@ export const mockBonds: Bond[] = [
     trustee: '海通证券'
   },
   {
-    id: 'bond_005',
+    id: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
     bondCode: '2480005.SH',
-    issuerId: 'issuer_001',
+    issuerId: 'issuerHuaxin',
     issuerName: '华鑫城市建设投资集团有限公司',
     bondType: 'municipal',
     bondTypeName: '地方政府债',
@@ -166,10 +166,10 @@ export const mockBonds: Bond[] = [
     trustee: '中信建投证券'
   },
   {
-    id: 'bond_006',
+    id: 'bond25MingtaiConvert',
     bondName: '25明泰可转债',
     bondCode: '123456.SH',
-    issuerId: 'issuer_002',
+    issuerId: 'issuerMingtai',
     issuerName: '明泰新能源科技股份有限公司',
     bondType: 'convertible',
     bondTypeName: '可转债',
@@ -186,10 +186,10 @@ export const mockBonds: Bond[] = [
     trustee: '华泰证券'
   },
   {
-    id: 'bond_007',
+    id: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     bondCode: '2420007.IB',
-    issuerId: 'issuer_003',
+    issuerId: 'issuerJiangwan',
     issuerName: '江湾交通发展集团有限公司',
     bondType: 'financial',
     bondTypeName: '金融债',
@@ -207,10 +207,10 @@ export const mockBonds: Bond[] = [
     trustee: '招商银行'
   },
   {
-    id: 'bond_008',
+    id: 'bond26KechuangGreen01',
     bondName: '26科创绿色债01',
     bondCode: '2680008.SZ',
-    issuerId: 'issuer_004',
+    issuerId: 'issuerKechuang',
     issuerName: '科创智能制造有限公司',
     bondType: 'corporate',
     bondTypeName: '绿色公司债',
@@ -227,10 +227,10 @@ export const mockBonds: Bond[] = [
     trustee: '广发证券'
   },
   {
-    id: 'bond_009',
+    id: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     bondCode: '2380009.IB',
-    issuerId: 'issuer_001',
+    issuerId: 'issuerHuaxin',
     issuerName: '华鑫城市建设投资集团有限公司',
     bondType: 'enterprise',
     bondTypeName: '企业债',
@@ -252,33 +252,33 @@ export const mockBonds: Bond[] = [
 // 里程碑数据
 const milestones: Milestone[][] = [
   [
-    { id: 'ms_001_1', name: '项目立项', date: '2025-09-01', completed: true, description: '完成内部立项审批' },
-    { id: 'ms_001_2', name: '尽职调查', date: '2025-10-15', completed: true, description: '完成发行人尽职调查' },
-    { id: 'ms_001_3', name: '材料制作', date: '2025-11-30', completed: false, description: '制作申报材料' },
-    { id: 'ms_001_4', name: '内核审核', date: '2025-12-20', completed: false, description: '公司内部内核审核' },
-    { id: 'ms_001_5', name: '申报提交', date: '2026-01-15', completed: false, description: '向监管机构提交申报' }
+    { id: 'milestone01Stage01', name: '项目立项', date: '2025-09-01', completed: true, description: '完成内部立项审批' },
+    { id: 'milestone01Stage02', name: '尽职调查', date: '2025-10-15', completed: true, description: '完成发行人尽职调查' },
+    { id: 'milestone01Stage03', name: '材料制作', date: '2025-11-30', completed: false, description: '制作申报材料' },
+    { id: 'milestone01Stage04', name: '内核审核', date: '2025-12-20', completed: false, description: '公司内部内核审核' },
+    { id: 'milestone01Stage05', name: '申报提交', date: '2026-01-15', completed: false, description: '向监管机构提交申报' }
   ],
   [
-    { id: 'ms_002_1', name: '项目立项', date: '2025-10-10', completed: true, description: '完成内部立项审批' },
-    { id: 'ms_002_2', name: '尽职调查', date: '2025-11-20', completed: true, description: '完成发行人尽职调查' },
-    { id: 'ms_002_3', name: '材料制作', date: '2025-12-25', completed: true, description: '制作申报材料' },
-    { id: 'ms_002_4', name: '内核审核', date: '2026-01-10', completed: false, description: '公司内部内核审核' },
-    { id: 'ms_002_5', name: '申报提交', date: '2026-01-30', completed: false, description: '向监管机构提交申报' }
+    { id: 'milestone02Stage01', name: '项目立项', date: '2025-10-10', completed: true, description: '完成内部立项审批' },
+    { id: 'milestone02Stage02', name: '尽职调查', date: '2025-11-20', completed: true, description: '完成发行人尽职调查' },
+    { id: 'milestone02Stage03', name: '材料制作', date: '2025-12-25', completed: true, description: '制作申报材料' },
+    { id: 'milestone02Stage04', name: '内核审核', date: '2026-01-10', completed: false, description: '公司内部内核审核' },
+    { id: 'milestone02Stage05', name: '申报提交', date: '2026-01-30', completed: false, description: '向监管机构提交申报' }
   ],
   [
-    { id: 'ms_003_1', name: '项目立项', date: '2026-01-05', completed: true, description: '完成内部立项审批' },
-    { id: 'ms_003_2', name: '尽职调查', date: '2026-02-20', completed: true, description: '完成发行人尽职调查' },
-    { id: 'ms_003_3', name: '材料制作', date: '2026-03-30', completed: true, description: '制作申报材料' },
-    { id: 'ms_003_4', name: '内核审核', date: '2026-04-15', completed: true, description: '公司内部内核审核' },
-    { id: 'ms_003_5', name: '申报提交', date: '2026-04-30', completed: false, description: '向监管机构提交申报' }
+    { id: 'milestone03Stage01', name: '项目立项', date: '2026-01-05', completed: true, description: '完成内部立项审批' },
+    { id: 'milestone03Stage02', name: '尽职调查', date: '2026-02-20', completed: true, description: '完成发行人尽职调查' },
+    { id: 'milestone03Stage03', name: '材料制作', date: '2026-03-30', completed: true, description: '制作申报材料' },
+    { id: 'milestone03Stage04', name: '内核审核', date: '2026-04-15', completed: true, description: '公司内部内核审核' },
+    { id: 'milestone03Stage05', name: '申报提交', date: '2026-04-30', completed: false, description: '向监管机构提交申报' }
   ]
 ];
 
 // 承销项目数据
 export const mockUnderwritingProjects: UnderwritingProject[] = [
   {
-    id: 'uw_001',
-    bondId: 'bond_004',
+    id: 'underwritingProject01',
+    bondId: 'bond25Kechuang01',
     bondName: '25科创智造债01',
     projectName: '科创智造5亿元公司债承销项目',
     status: 'in_progress',
@@ -291,8 +291,8 @@ export const mockUnderwritingProjects: UnderwritingProject[] = [
     milestones: milestones[0]
   },
   {
-    id: 'uw_002',
-    bondId: 'bond_006',
+    id: 'underwritingProject02',
+    bondId: 'bond25MingtaiConvert',
     bondName: '25明泰可转债',
     projectName: '明泰新能8亿元可转债承销项目',
     status: 'in_progress',
@@ -305,8 +305,8 @@ export const mockUnderwritingProjects: UnderwritingProject[] = [
     milestones: milestones[1]
   },
   {
-    id: 'uw_003',
-    bondId: 'bond_008',
+    id: 'underwritingProject03',
+    bondId: 'bond26KechuangGreen01',
     bondName: '26科创绿色债01',
     projectName: '科创智造6亿元绿色债承销项目',
     status: 'submitted',
@@ -319,8 +319,8 @@ export const mockUnderwritingProjects: UnderwritingProject[] = [
     milestones: milestones[2]
   },
   {
-    id: 'uw_004',
-    bondId: 'bond_003',
+    id: 'underwritingProject04',
+    bondId: 'bond26Jiangwan01',
     bondName: '26江湾交通债01',
     projectName: '江湾交通15亿元企业债承销项目',
     status: 'approved',
@@ -331,12 +331,12 @@ export const mockUnderwritingProjects: UnderwritingProject[] = [
     expectedSubmitDate: '2025-12-20',
     teamMembers: ['黄勇', '徐婷', '朱伟'],
     milestones: [
-      { id: 'ms_004_1', name: '项目立项', date: '2025-08-01', completed: true },
-      { id: 'ms_004_2', name: '尽职调查', date: '2025-09-15', completed: true },
-      { id: 'ms_004_3', name: '材料制作', date: '2025-10-30', completed: true },
-      { id: 'ms_004_4', name: '内核审核', date: '2025-11-20', completed: true },
-      { id: 'ms_004_5', name: '申报提交', date: '2025-12-20', completed: true },
-      { id: 'ms_004_6', name: '获取批文', date: '2026-03-15', completed: true }
+      { id: 'milestone04Stage01', name: '项目立项', date: '2025-08-01', completed: true },
+      { id: 'milestone04Stage02', name: '尽职调查', date: '2025-09-15', completed: true },
+      { id: 'milestone04Stage03', name: '材料制作', date: '2025-10-30', completed: true },
+      { id: 'milestone04Stage04', name: '内核审核', date: '2025-11-20', completed: true },
+      { id: 'milestone04Stage05', name: '申报提交', date: '2025-12-20', completed: true },
+      { id: 'milestone04Stage06', name: '获取批文', date: '2026-03-15', completed: true }
     ]
   }
 ];
@@ -344,8 +344,8 @@ export const mockUnderwritingProjects: UnderwritingProject[] = [
 // 发行信息数据
 export const mockIssuanceInfoList: IssuanceInfo[] = [
   {
-    id: 'iss_001',
-    bondId: 'bond_003',
+    id: 'issuanceInfo01',
+    bondId: 'bond26Jiangwan01',
     bondName: '26江湾交通债01',
     issueMethod: '簿记建档',
     bookbuildingDate: '2026-04-08',
@@ -358,8 +358,8 @@ export const mockIssuanceInfoList: IssuanceInfo[] = [
     statusName: '配售中'
   },
   {
-    id: 'iss_002',
-    bondId: 'bond_008',
+    id: 'issuanceInfo02',
+    bondId: 'bond26KechuangGreen01',
     bondName: '26科创绿色债01',
     issueMethod: '公开招标',
     bookbuildingDate: '2026-02-26',
@@ -372,8 +372,8 @@ export const mockIssuanceInfoList: IssuanceInfo[] = [
     statusName: '发行完成'
   },
   {
-    id: 'iss_003',
-    bondId: 'bond_004',
+    id: 'issuanceInfo03',
+    bondId: 'bond25Kechuang01',
     bondName: '25科创智造债01',
     issueMethod: '簿记建档',
     paymentDeadline: '2025-06-20',
@@ -432,8 +432,8 @@ export const mockDurationBonds: DurationBond[] = [
 // 付息兑付记录
 export const mockInterestPayments: InterestPayment[] = [
   {
-    id: 'pay_001',
-    bondId: 'bond_001',
+    id: 'interestPayment01',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     paymentDate: '2025-03-15',
     paymentType: 'interest',
@@ -443,8 +443,8 @@ export const mockInterestPayments: InterestPayment[] = [
     remark: '首期利息支付完成'
   },
   {
-    id: 'pay_002',
-    bondId: 'bond_009',
+    id: 'interestPayment02',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     paymentDate: '2024-07-12',
     paymentType: 'interest',
@@ -453,8 +453,8 @@ export const mockInterestPayments: InterestPayment[] = [
     statusName: '已支付'
   },
   {
-    id: 'pay_003',
-    bondId: 'bond_009',
+    id: 'interestPayment03',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     paymentDate: '2025-01-12',
     paymentType: 'interest',
@@ -463,8 +463,8 @@ export const mockInterestPayments: InterestPayment[] = [
     statusName: '已支付'
   },
   {
-    id: 'pay_004',
-    bondId: 'bond_009',
+    id: 'interestPayment04',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     paymentDate: '2025-07-12',
     paymentType: 'interest',
@@ -474,8 +474,8 @@ export const mockInterestPayments: InterestPayment[] = [
     remark: '正在准备付息资金'
   },
   {
-    id: 'pay_005',
-    bondId: 'bond_007',
+    id: 'interestPayment05',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     paymentDate: '2025-05-25',
     paymentType: 'interest',
@@ -484,8 +484,8 @@ export const mockInterestPayments: InterestPayment[] = [
     statusName: '已支付'
   },
   {
-    id: 'pay_006',
-    bondId: 'bond_002',
+    id: 'interestPayment06',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     paymentDate: '2026-01-20',
     paymentType: 'interest',
@@ -494,8 +494,8 @@ export const mockInterestPayments: InterestPayment[] = [
     statusName: '待支付'
   },
   {
-    id: 'pay_007',
-    bondId: 'bond_005',
+    id: 'interestPayment07',
+    bondId: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
     paymentDate: '2025-09-08',
     paymentType: 'interest',
@@ -508,73 +508,73 @@ export const mockInterestPayments: InterestPayment[] = [
 // 信息披露记录
 export const mockDisclosureRecords: DisclosureRecord[] = [
   {
-    id: 'disc_001',
-    bondId: 'bond_001',
+    id: 'disclosure01',
+    bondId: 'bond24Huaxin01',
     title: '2024年年度报告',
     type: 'periodic',
     typeName: '定期报告',
     publishDate: '2025-04-30',
-    fileUrl: '/files/bond_001_annual_2024.pdf'
+    fileUrl: '/files/bond24Huaxin01_annual_2024.pdf'
   },
   {
-    id: 'disc_002',
-    bondId: 'bond_001',
+    id: 'disclosure02',
+    bondId: 'bond24Huaxin01',
     title: '2025年一季度财务报告',
     type: 'periodic',
     typeName: '定期报告',
     publishDate: '2025-04-30'
   },
   {
-    id: 'disc_003',
-    bondId: 'bond_001',
+    id: 'disclosure03',
+    bondId: 'bond24Huaxin01',
     title: '关于24华鑫城投债01首期付息事项的公告',
     type: 'temporary',
     typeName: '临时公告',
     publishDate: '2025-03-10'
   },
   {
-    id: 'disc_004',
-    bondId: 'bond_002',
+    id: 'disclosure04',
+    bondId: 'bond25Mingtai01',
     title: '2024年年度审计报告',
     type: 'periodic',
     typeName: '定期报告',
     publishDate: '2025-04-28'
   },
   {
-    id: 'disc_005',
-    bondId: 'bond_003',
+    id: 'disclosure05',
+    bondId: 'bond26Jiangwan01',
     title: '26江湾交通债01发行公告',
     type: 'temporary',
     typeName: '临时公告',
     publishDate: '2026-04-05'
   },
   {
-    id: 'disc_006',
-    bondId: 'bond_003',
+    id: 'disclosure06',
+    bondId: 'bond26Jiangwan01',
     title: '26江湾交通债01募集说明书',
     type: 'other',
     typeName: '其他文件',
     publishDate: '2026-04-03'
   },
   {
-    id: 'disc_007',
-    bondId: 'bond_009',
+    id: 'disclosure07',
+    bondId: 'bond23Huaxin03',
     title: '关于召开2025年第一次债券持有人会议的通知',
     type: 'temporary',
     typeName: '临时公告',
     publishDate: '2025-06-15'
   },
   {
-    id: 'disc_008',
-    bondId: 'bond_007',
+    id: 'disclosure08',
+    bondId: 'bond24JiangwanFinance',
     title: '2024年年度受托管理事务报告',
     type: 'periodic',
     typeName: '定期报告',
     publishDate: '2025-05-20'
   },
   {
-    id: 'disc_009',
-    bondId: 'bond_008',
+    id: 'disclosure09',
+    bondId: 'bond26KechuangGreen01',
     title: '26科创绿色债01发行结果公告',
     type: 'temporary',
     typeName: '临时公告',

@@ -27,3 +27,6 @@ export type { EmptyStateProps } from './EmptyState'
 
 export { default as LoadingSpinner } from './LoadingSpinner'
 export type { LoadingSpinnerProps } from './LoadingSpinner'
+
+export { default as Modal } from './Modal'
+export type { ModalProps } from './Modal'

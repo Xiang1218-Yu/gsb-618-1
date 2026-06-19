@@ -5,7 +5,8 @@ import {
   CheckCircle,
   DollarSign,
   Plus,
-  Eye
+  Eye,
+  Edit
 } from 'lucide-react';
 import {
   Card,
@@ -14,162 +15,242 @@ import {
   Button,
   DataTable,
   PageHeader,
-  SearchFilter
+  SearchFilter,
+  Modal
 } from '@/components/UI';
 import type { Column } from '@/components/UI/DataTable';
-import { mockIssuanceInfoList } from '@/data/mockBonds';
-import type { IssuanceInfo } from '@/types/bond';
+import { useDataStore } from '@/store/dataStore';
+import type { Bond } from '@/types/bond';
 
-// 债券发行管理页面
+/**
+ * 债券发行管理页面
+ * 负责管理处于发行中状态的债券，包括新增发行、查看详情、编辑等功能
+ */
 const Issuance: React.FC = () => {
+  // 从store获取数据和方法
+  const { bonds, addBond } = useDataStore();
+
+  // 搜索和筛选状态
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  /**
-   * 发行状态映射配置
-   * 定义债券发行流程中的各个阶段状态
-   * key: 状态编码
-   * label: 中文显示名称
-   * color: Badge组件的颜色样式
-   */
-  const statusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    preparing: { label: '发行准备', color: 'default' },      // 发行前期准备阶段
-    bookbuilding: { label: '簿记建档', color: 'info' },      // 簿记建档询价阶段
-    allocating: { label: '配售中', color: 'warning' },        // 债券配售分配阶段
-    completed: { label: '发行完成', color: 'success' }        // 发行全部完成
-  };
+  // Modal状态控制
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedBond, setSelectedBond] = useState<Bond | null>(null);
 
-  // 过滤数据
-  const filteredData = mockIssuanceInfoList.filter(item => {
-    const matchSearch = item.bondName.includes(searchText);
-    const matchStatus = statusFilter === 'all' || item.status === statusFilter;
-    return matchSearch && matchStatus;
+  // 新增表单状态
+  const [addFormData, setAddFormData] = useState({
+    bondName: '',
+    bondCode: '',
+    issuerName: '',
+    issueAmount: '',
+    issueRate: '',
+    issueDate: ''
   });
 
-  // 统计数据
+  /**
+   * 债券类型配置
+   * 用于新增债券时的类型选择
+   */
+  const bondTypeOptions = [
+    { value: 'corporate', label: '公司债', typeName: '公司债' },
+    { value: 'enterprise', label: '企业债', typeName: '企业债' },
+    { value: 'municipal', label: '地方政府债', typeName: '地方政府债' },
+    { value: 'financial', label: '金融债', typeName: '金融债' },
+    { value: 'convertible', label: '可转债', typeName: '可转债' }
+  ];
+
+  /**
+   * 筛选出状态为'issuing'（发行中）的债券
+   */
+  const issuingBonds = bonds.filter(bond => bond.status === 'issuing');
+
+  /**
+   * 数据过滤函数
+   * 根据搜索文本筛选发行中的债券
+   */
+  const filteredData = issuingBonds.filter(bond => {
+    const matchSearch = bond.bondName.includes(searchText) ||
+                       bond.bondCode.includes(searchText) ||
+                       bond.issuerName.includes(searchText);
+    return matchSearch;
+  });
+
+  /**
+   * 统计数据计算
+   */
   const stats = {
-    total: mockIssuanceInfoList.length,
-    preparing: mockIssuanceInfoList.filter(i => i.status === 'preparing').length,
-    allocating: mockIssuanceInfoList.filter(i => i.status === 'allocating').length,
-    completed: mockIssuanceInfoList.filter(i => i.status === 'completed').length,
-    totalAmount: mockIssuanceInfoList.reduce((sum, i) => sum + i.allocatedAmount, 0) / 10000
+    total: issuingBonds.length,
+    totalAmount: issuingBonds.reduce((sum, b) => sum + b.issueAmount, 0),
+    avgRate: issuingBonds.length > 0
+      ? (issuingBonds.reduce((sum, b) => sum + b.issueRate, 0) / issuingBonds.length).toFixed(2)
+      : '0.00'
   };
 
-  // 格式化金额（万元转亿元）
-  const formatAmount = (amount: number): string => {
-    return (amount / 10000).toFixed(2) + '亿';
+  /**
+   * 打开新增发行弹窗
+   */
+  const handleOpenAddModal = () => {
+    setAddFormData({
+      bondName: '',
+      bondCode: '',
+      issuerName: '',
+      issueAmount: '',
+      issueRate: '',
+      issueDate: ''
+    });
+    setIsAddModalOpen(true);
+  };
+
+  /**
+   * 提交新增发行表单
+   */
+  const handleAddSubmit = () => {
+    if (!addFormData.bondName || !addFormData.bondCode || !addFormData.issuerName ||
+        !addFormData.issueAmount || !addFormData.issueRate || !addFormData.issueDate) {
+      alert('请填写完整信息');
+      return;
+    }
+
+    // 默认使用公司债类型
+    const defaultType = bondTypeOptions[0];
+
+    // 构建新债券数据
+    const newBond: Omit<Bond, 'id'> = {
+      bondName: addFormData.bondName,
+      bondCode: addFormData.bondCode,
+      issuerId: `issuer_${Date.now()}`,
+      issuerName: addFormData.issuerName,
+      bondType: defaultType.value as Bond['bondType'],
+      bondTypeName: defaultType.typeName,
+      issueAmount: parseFloat(addFormData.issueAmount),
+      issueRate: parseFloat(addFormData.issueRate),
+      issuePrice: 100,
+      termYears: 3,
+      issueDate: addFormData.issueDate,
+      maturityDate: addFormData.issueDate,
+      status: 'issuing',
+      statusName: '发行中',
+      creditRating: 'AAA',
+      leadUnderwriter: '主承销商',
+      trustee: '受托管理人'
+    };
+
+    addBond(newBond);
+    setIsAddModalOpen(false);
+  };
+
+  /**
+   * 打开债券详情弹窗
+   */
+  const handleViewDetail = (bond: Bond) => {
+    setSelectedBond(bond);
+    setIsDetailModalOpen(true);
+  };
+
+  /**
+   * 打开编辑弹窗（只读展示）
+   */
+  const handleEdit = (bond: Bond) => {
+    setSelectedBond(bond);
+    setIsEditModalOpen(true);
   };
 
   /**
    * 表格列配置数组
-   * 定义债券发行列表的各列显示规则
    */
-  const columns: Column<IssuanceInfo>[] = [
-    // 债券名称列：显示债券全称
+  const columns: Column<Bond>[] = [
     {
       key: 'bondName',
       title: '债券名称',
-      width: '180px',
+      width: '200px',
       render: (record) => (
-        <div className="font-medium text-gray-900">{record.bondName}</div>
+        <div>
+          <div className="font-medium text-gray-900">{record.bondName}</div>
+          <div className="text-xs text-gray-500 mt-0.5 font-mono">{record.bondCode}</div>
+        </div>
       )
     },
-    // 发行状态列：使用Badge显示当前发行阶段
     {
-      key: 'status',
-      title: '发行状态',
-      width: '110px',
+      key: 'issuerName',
+      title: '发行人',
+      width: '160px',
       render: (record) => (
-        <Badge variant={statusMap[record.status]?.color || 'default'} dot>
-          {statusMap[record.status]?.label || record.statusName}
-        </Badge>
+        <span className="text-sm text-gray-700">{record.issuerName}</span>
       )
     },
-    // 发行方式列：显示公开发行/私募等方式
     {
-      key: 'issueMethod',
-      title: '发行方式',
-      width: '110px',
-      render: (record) => (
-        <span className="text-sm text-gray-700">{record.issueMethod}</span>
-      )
-    },
-    // 上市地点列：显示债券挂牌交易的场所
-    {
-      key: 'listingLocation',
-      title: '上市地点',
-      width: '140px',
-      render: (record) => (
-        <span className="text-sm text-gray-600">{record.listingLocation}</span>
-      )
-    },
-    // 簿记日期列：显示簿记建档的日期
-    {
-      key: 'bookbuildingDate',
-      title: '簿记日期',
-      width: '110px',
-      render: (record) => (
-        <span className="text-sm text-gray-600">{record.bookbuildingDate || '-'}</span>
-      )
-    },
-    // 缴款截止日列：显示认购方缴款的最后期限
-    {
-      key: 'paymentDeadline',
-      title: '缴款截止日',
-      width: '110px',
-      render: (record) => (
-        <span className="text-sm text-gray-600">{record.paymentDeadline}</span>
-      )
-    },
-    // 认购倍数列：显示超额认购倍数，用橙色高亮
-    {
-      key: 'subscriptionMultiple',
-      title: '认购倍数',
+      key: 'bondTypeName',
+      title: '债券类型',
       width: '100px',
-      align: 'right',
       render: (record) => (
-        <span className="text-sm font-medium text-[#d97706]">
-          {record.subscriptionMultiple ? `${record.subscriptionMultiple}x` : '-'}
-        </span>
+        <Badge variant="default">{record.bondTypeName}</Badge>
       )
     },
-    // 配售金额列：显示最终配售的金额，格式化显示
     {
-      key: 'allocatedAmount',
-      title: '配售金额',
-      width: '110px',
+      key: 'issueAmount',
+      title: '发行规模(亿)',
+      width: '120px',
       align: 'right',
       render: (record) => (
-        <span className="text-sm text-gray-700">
-          {record.allocatedAmount > 0 ? formatAmount(record.allocatedAmount) : '-'}
-        </span>
+        <span className="text-sm font-semibold text-[#1e3a8a]">{record.issueAmount.toFixed(2)}</span>
       )
     },
-    // 操作列：查看详情按钮
+    {
+      key: 'issueRate',
+      title: '票面利率(%)',
+      width: '120px',
+      align: 'right',
+      render: (record) => (
+        <span className="text-sm font-medium text-[#d97706]">{record.issueRate.toFixed(2)}%</span>
+      )
+    },
+    {
+      key: 'creditRating',
+      title: '信用评级',
+      width: '90px',
+      align: 'center',
+      render: (record) => (
+        <Badge variant="success">{record.creditRating}</Badge>
+      )
+    },
+    {
+      key: 'issueDate',
+      title: '发行日期',
+      width: '110px',
+      render: (record) => (
+        <span className="text-sm text-gray-600">{record.issueDate}</span>
+      )
+    },
     {
       key: 'actions',
       title: '操作',
-      width: '100px',
+      width: '160px',
       align: 'center',
-      render: () => (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="text" size="sm">
+      render: (record) => (
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => handleViewDetail(record)}
+          >
             <Eye className="w-4 h-4" />
+            <span className="ml-1">查看详情</span>
+          </Button>
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => handleEdit(record)}
+          >
+            <Edit className="w-4 h-4" />
+            <span className="ml-1">编辑</span>
           </Button>
         </div>
       )
     }
-  ];
-
-  // 筛选选项
-  const filterOptions = [
-    { label: '全部状态', value: 'all' },
-    { label: '发行准备', value: 'preparing' },
-    { label: '簿记建档', value: 'bookbuilding' },
-    { label: '配售中', value: 'allocating' },
-    { label: '发行完成', value: 'completed' }
   ];
 
   return (
@@ -181,9 +262,9 @@ const Issuance: React.FC = () => {
           { title: '发行管理', href: '/issuance' }
         ]}
         extra={
-          <Button 
+          <Button
             variant="primary"
-            onClick={() => alert('新增债券发行功能开发中...')}
+            onClick={handleOpenAddModal}
           >
             <Plus className="w-4 h-4 mr-1" />
             新增发行
@@ -191,66 +272,42 @@ const Issuance: React.FC = () => {
         }
       />
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 统计卡片区域 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          title="发行项目总数"
+          title="发行中债券"
           value={stats.total}
           icon={TrendingUp}
           className="border-l-4 border-[#1e3a8a]"
         />
         <StatCard
-          title="发行准备"
-          value={stats.preparing}
-          icon={Calendar}
-          className="border-l-4 border-gray-500"
-        />
-        <StatCard
-          title="配售中"
-          value={stats.allocating}
-          icon={DollarSign}
-          className="border-l-4 border-amber-500"
-        />
-        <StatCard
-          title="已完成发行"
-          value={stats.completed}
-          icon={CheckCircle}
-          className="border-l-4 border-green-500"
-        />
-        <StatCard
-          title="累计发行规模"
-          value={`${stats.totalAmount.toFixed(1)}亿`}
+          title="累计发行规模(亿)"
+          value={stats.totalAmount.toFixed(2)}
           icon={DollarSign}
           className="border-l-4 border-[#d97706]"
         />
+        <StatCard
+          title="平均票面利率(%)"
+          value={stats.avgRate}
+          icon={Calendar}
+          className="border-l-4 border-green-500"
+        />
       </div>
 
-      {/* 搜索和筛选 */}
+      {/* 搜索筛选区域 */}
       <Card>
         <SearchFilter
-          searchPlaceholder="搜索债券名称"
+          searchPlaceholder="搜索债券名称、代码或发行人"
           searchValue={searchText}
           onSearchChange={setSearchText}
-          selects={[
-            {
-              key: 'status',
-              value: statusFilter,
-              onChange: (val) => {
-                setStatusFilter(val);
-                setCurrentPage(1);
-              },
-              options: filterOptions,
-              placeholder: '发行状态'
-            }
-          ]}
         />
       </Card>
 
-      {/* 数据表格 */}
+      {/* 数据表格区域 */}
       <Card bodyClassName="p-0">
-        <DataTable<IssuanceInfo & Record<string, unknown>>
-          columns={columns as Column<IssuanceInfo & Record<string, unknown>>[]}
-          data={filteredData as (IssuanceInfo & Record<string, unknown>)[]}
+        <DataTable<Bond & Record<string, unknown>>
+          columns={columns as Column<Bond & Record<string, unknown>>[]}
+          data={filteredData as (Bond & Record<string, unknown>)[]}
           rowKey="id"
           pagination={{
             current: currentPage,
@@ -260,6 +317,262 @@ const Issuance: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* 新增发行弹窗 */}
+      <Modal
+        open={isAddModalOpen}
+        title="新增债券发行"
+        width="lg"
+        onClose={() => setIsAddModalOpen(false)}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAddSubmit}
+            >
+              确定提交
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {/* 债券名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                债券名称 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={addFormData.bondName}
+                onChange={(e) => setAddFormData({ ...addFormData, bondName: e.target.value })}
+                placeholder="请输入债券名称"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 债券代码 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                债券代码 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={addFormData.bondCode}
+                onChange={(e) => setAddFormData({ ...addFormData, bondCode: e.target.value })}
+                placeholder="请输入债券代码"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 发行人 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发行人 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={addFormData.issuerName}
+                onChange={(e) => setAddFormData({ ...addFormData, issuerName: e.target.value })}
+                placeholder="请输入发行人名称"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 发行规模 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发行规模(亿元) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={addFormData.issueAmount}
+                onChange={(e) => setAddFormData({ ...addFormData, issueAmount: e.target.value })}
+                placeholder="请输入发行规模"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 票面利率 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                票面利率(%) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={addFormData.issueRate}
+                onChange={(e) => setAddFormData({ ...addFormData, issueRate: e.target.value })}
+                placeholder="请输入票面利率"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 发行日期 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                发行日期 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={addFormData.issueDate}
+                onChange={(e) => setAddFormData({ ...addFormData, issueDate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 债券详情弹窗 */}
+      <Modal
+        open={isDetailModalOpen}
+        title="债券发行详情"
+        width="lg"
+        onClose={() => setIsDetailModalOpen(false)}
+        footer={
+          <Button
+            variant="secondary"
+            onClick={() => setIsDetailModalOpen(false)}
+          >
+            关闭
+          </Button>
+        }
+      >
+        {selectedBond && (
+          <div className="space-y-4">
+            <div className="bg-[#1e3a8a]/5 rounded-lg p-4 mb-4">
+              <h4 className="text-lg font-semibold text-[#1e3a8a]">{selectedBond.bondName}</h4>
+              <p className="text-sm text-gray-500 mt-1 font-mono">{selectedBond.bondCode}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500">发行人</div>
+                <div className="text-base font-medium text-gray-900 mt-1">{selectedBond.issuerName}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">债券类型</div>
+                <div className="mt-1">
+                  <Badge variant="info">{selectedBond.bondTypeName}</Badge>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">发行规模</div>
+                <div className="text-lg font-bold text-[#1e3a8a] mt-1">{selectedBond.issueAmount.toFixed(2)} 亿元</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">票面利率</div>
+                <div className="text-lg font-bold text-[#d97706] mt-1">{selectedBond.issueRate.toFixed(2)}%</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">信用评级</div>
+                <div className="mt-1">
+                  <Badge variant="success">{selectedBond.creditRating}</Badge>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">发行日期</div>
+                <div className="text-base text-gray-700 mt-1">{selectedBond.issueDate}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">主承销商</div>
+                <div className="text-base text-gray-700 mt-1">{selectedBond.leadUnderwriter}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">受托管理人</div>
+                <div className="text-base text-gray-700 mt-1">{selectedBond.trustee}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* 编辑弹窗（只读展示） */}
+      <Modal
+        open={isEditModalOpen}
+        title="编辑债券信息（只读）"
+        width="lg"
+        onClose={() => setIsEditModalOpen(false)}
+        footer={
+          <Button
+            variant="secondary"
+            onClick={() => setIsEditModalOpen(false)}
+          >
+            关闭
+          </Button>
+        }
+      >
+        {selectedBond && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-amber-700">当前为只读模式，如需修改请联系系统管理员</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">债券名称</label>
+                <input
+                  type="text"
+                  value={selectedBond.bondName}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">债券代码</label>
+                <input
+                  type="text"
+                  value={selectedBond.bondCode}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">发行人</label>
+                <input
+                  type="text"
+                  value={selectedBond.issuerName}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">发行规模(亿元)</label>
+                <input
+                  type="text"
+                  value={selectedBond.issueAmount.toFixed(2)}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">票面利率(%)</label>
+                <input
+                  type="text"
+                  value={selectedBond.issueRate.toFixed(2)}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">发行日期</label>
+                <input
+                  type="text"
+                  value={selectedBond.issueDate}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-600"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

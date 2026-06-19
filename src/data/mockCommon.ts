@@ -13,69 +13,69 @@ const warningLevelNames: Record<WarningLevel, string> = {
 // 待办事项列表
 export const mockTodoList: TodoItem[] = [
   {
-    id: 'todo_001',
-    title: '22华远01一季度财务指标预警跟进',
+    id: 'todoFinanceHuaxin01',
+    title: '24华鑫城投债01一季度财务指标预警跟进',
     type: 'interest',
     priority: 'high',
     dueDate: '2026-06-22',
-    bondId: 'bond_001',
-    bondName: '22华远01'
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01'
   },
   {
-    id: 'todo_002',
-    title: '蓝光发展债务重组进展跟踪报告',
+    id: 'todoSentimentJiangwan01',
+    title: '江湾交通债务重组进展跟踪报告',
     type: 'sentiment',
     priority: 'high',
     dueDate: '2026-06-21',
-    bondId: 'bond_003',
-    bondName: '21蓝光03'
+    bondId: 'bond26Jiangwan01',
+    bondName: '26江湾交通债01'
   },
   {
-    id: 'todo_003',
-    title: '23粤海02付息资金落实确认',
+    id: 'todoInterestMingtai01',
+    title: '25明泰新能债01付息资金落实确认',
     type: 'interest',
     priority: 'medium',
     dueDate: '2026-06-25',
-    bondId: 'bond_002',
-    bondName: '23粤海02'
+    bondId: 'bond25Mingtai01',
+    bondName: '25明泰新能债01'
   },
   {
-    id: 'todo_004',
-    title: '24京能01承销材料准备',
+    id: 'todoUnderwriting01',
+    title: '26科创绿色债01承销材料准备',
     type: 'underwriting',
     priority: 'medium',
     dueDate: '2026-06-28'
   },
   {
-    id: 'todo_005',
-    title: '首钢集团二季度盈利调研',
+    id: 'todoFundKechuang01',
+    title: '科创智造二季度盈利调研',
     type: 'fund',
     priority: 'low',
     dueDate: '2026-07-05',
-    bondId: 'bond_004',
-    bondName: '22首钢01'
+    bondId: 'bond25Kechuang01',
+    bondName: '25科创智造债01'
   },
   {
-    id: 'todo_006',
-    title: '华远地产资产出售交易进展跟进',
+    id: 'todoSentimentHuaxin01',
+    title: '华鑫城投资产出售交易进展跟进',
     type: 'sentiment',
     priority: 'high',
     dueDate: '2026-06-20',
-    bondId: 'bond_001',
-    bondName: '22华远01'
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01'
   },
   {
-    id: 'todo_007',
-    title: '22首钢01绿色债券信息披露',
+    id: 'todoIssuanceKechuang01',
+    title: '25科创智造债01绿色债券信息披露',
     type: 'issuance',
     priority: 'medium',
     dueDate: '2026-06-30',
-    bondId: 'bond_004',
-    bondName: '22首钢01'
+    bondId: 'bond25Kechuang01',
+    bondName: '25科创智造债01'
   },
   {
-    id: 'todo_008',
-    title: '房地产行业月度风险监测报告',
+    id: 'todoFundIndustry01',
+    title: '城投行业月度风险监测报告',
     type: 'fund',
     priority: 'low',
     dueDate: '2026-07-01'
@@ -85,80 +85,80 @@ export const mockTodoList: TodoItem[] = [
 // 风险预警列表
 export const mockWarningList: WarningItem[] = [
   {
-    id: 'warn_001',
-    title: '蓝光发展资产负债率突破90%危险线',
+    id: 'warnFinanceJiangwan01',
+    title: '江湾交通资产负债率突破90%危险线',
     type: 'finance',
     level: 'danger',
     time: '2026-04-28 10:30:00',
-    bondId: 'bond_003',
-    bondName: '21蓝光03',
+    bondId: 'bond26Jiangwan01',
+    bondName: '26江湾交通债01',
     description: '2026年一季度资产负债率达92.1%，超过85%危险阈值，债务风险持续加剧',
     handled: false
   },
   {
-    id: 'warn_002',
-    title: '华远地产一季度由盈转亏',
+    id: 'warnFinanceHuaxin01',
+    title: '华鑫城投一季度由盈转亏',
     type: 'finance',
     level: 'danger',
     time: '2026-04-26 16:00:00',
-    bondId: 'bond_001',
-    bondName: '22华远01',
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01',
     description: '一季度归母净利润-1.2亿元，同比下降156%，盈利能力大幅恶化',
     handled: false
   },
   {
-    id: 'warn_003',
-    title: '网传华远地产北京项目停工引发舆情',
+    id: 'warnSentimentHuaxin01',
+    title: '网传华鑫城投本地项目停工引发舆情',
     type: 'sentiment',
     level: 'warning',
     time: '2026-06-10 18:30:00',
-    bondId: 'bond_001',
-    bondName: '22华远01',
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01',
     description: '网络流传项目停工消息，阅读量超4.5万，公司已回应但仍需关注舆情走向',
     handled: false
   },
   {
-    id: 'warn_004',
-    title: '蓝光发展到期未偿债务达328亿元',
+    id: 'warnFinanceJiangwan02',
+    title: '江湾交通到期未偿债务达328亿元',
     type: 'finance',
     level: 'danger',
     time: '2026-06-05 09:15:00',
-    bondId: 'bond_003',
-    bondName: '21蓝光03',
+    bondId: 'bond26Jiangwan01',
+    bondName: '26江湾交通债01',
     description: '截至5月末累计违约债务本息328.45亿元，诉讼案件持续增加',
     handled: true
   },
   {
-    id: 'warn_005',
-    title: '首钢集团净利润率接近预警线',
+    id: 'warnFinanceKechuang01',
+    title: '科创智造净利润率接近预警线',
     type: 'finance',
     level: 'attention',
     time: '2026-04-30 14:20:00',
-    bondId: 'bond_004',
-    bondName: '22首钢01',
-    description: '一季度净利润率4.2%，接近5%预警阈值，受钢铁行业周期影响',
+    bondId: 'bond25Kechuang01',
+    bondName: '25科创智造债01',
+    description: '一季度净利润率4.2%，接近5%预警阈值，受高端制造行业周期影响',
     handled: false
   },
   {
-    id: 'warn_006',
-    title: '22华远01资产处置事项需关注合规风险',
+    id: 'warnComplianceHuaxin01',
+    title: '24华鑫城投债01资产处置事项需关注合规风险',
     type: 'compliance',
     level: 'attention',
     time: '2026-06-02 11:00:00',
-    bondId: 'bond_001',
-    bondName: '22华远01',
-    description: '拟42亿元出售北京核心区写字楼，需关注交易定价公允性和信息披露合规性',
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01',
+    description: '拟42亿元出售本地核心区写字楼，需关注交易定价公允性和信息披露合规性',
     handled: false
   },
   {
-    id: 'warn_007',
-    title: '地产行业研报提示流动性风险',
+    id: 'warnSentimentIndustry01',
+    title: '城投行业研报提示流动性风险',
     type: 'sentiment',
     level: 'attention',
     time: '2026-06-14 09:45:00',
-    bondId: 'bond_001',
-    bondName: '22华远01',
-    description: '中信证券研报指出部分房企资产处置进展缓慢，流动性压力仍存',
+    bondId: 'bond24Huaxin01',
+    bondName: '24华鑫城投债01',
+    description: '中信证券研报指出部分城投企业资产处置进展缓慢，流动性压力仍存',
     handled: false
   }
 ];

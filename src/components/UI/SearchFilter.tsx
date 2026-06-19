@@ -153,7 +153,7 @@ export default function SearchFilter({
               />
             </button>
             {openSelect === select.key && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-auto">
+              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-auto">
                 {select.options.map((option) => (
                   <button
                     key={option.value}

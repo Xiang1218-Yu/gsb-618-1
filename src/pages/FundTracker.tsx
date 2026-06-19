@@ -5,7 +5,8 @@ import {
   PiggyBank,
   FileCheck,
   Plus,
-  Eye
+  Eye,
+  Trash2
 } from 'lucide-react';
 import {
   Card,
@@ -14,83 +15,108 @@ import {
   Button,
   DataTable,
   PageHeader,
-  SearchFilter
+  SearchFilter,
+  Modal
 } from '@/components/UI';
 import type { Column } from '@/components/UI/DataTable';
+import { useDataStore } from '@/store/dataStore';
+import type { FundUsagePlan, FundUseRecord, FundChangeRequest, SpecialAccount } from '@/types/fund';
+import type { Bond } from '@/types/bond';
 import {
   mockSpecialAccounts,
   mockFundUsagePlans,
-  mockFundUseRecords,
   mockFundChangeRequests
 } from '@/data/mockFunds';
-import type { FundUsagePlan, FundUseRecord, FundChangeRequest } from '@/types/fund';
 
-// 募集资金追踪页面
+/**
+ * 募集资金追踪页面
+ * 负责跟踪募集资金专户存储、使用计划、使用台账及用途变更情况
+ * 重点：在"使用台账"Tab下提供新增使用记录功能
+ */
 const FundTracker: React.FC = () => {
-  // 当前激活的标签页：专户概览/使用计划/使用台账/用途变更
+  // 从store获取数据和方法
+  const {
+    bonds,
+    fundUseRecords,
+    addFundUseRecord,
+    deleteFundUseRecord
+  } = useDataStore();
+
+  // Tab和分页状态
   const [activeTab, setActiveTab] = useState<'overview' | 'usage' | 'records' | 'changes'>('overview');
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Modal状态控制
+  const [isAddRecordModalOpen, setIsAddRecordModalOpen] = useState(false);
+  const [isRecordDetailModalOpen, setIsRecordDetailModalOpen] = useState(false);
+  const [isDeleteRecordConfirmOpen, setIsDeleteRecordConfirmOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<FundUseRecord | null>(null);
+
+  // 新增使用记录表单状态
+  const [addRecordFormData, setAddRecordFormData] = useState({
+    bondId: '',
+    projectName: '',
+    useDate: '',
+    amount: '',
+    payee: '',
+    purpose: ''
+  });
+
   /**
    * 用途类型映射配置
-   * 定义募集资金的各种使用用途分类
    */
   const purposeTypeMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    project: { label: '项目建设', color: 'info' },              // 用于募投项目建设
-    repay_debt: { label: '偿还借款', color: 'warning' },        // 用于偿还公司债务
-    supplement_liquidity: { label: '补充流动资金', color: 'default' }, // 补充营运资金
-    merge_acquisition: { label: '并购重组', color: 'success' },  // 用于并购重组
-    other: { label: '其他', color: 'default' }                   // 其他用途
+    project: { label: '项目建设', color: 'info' },
+    repay_debt: { label: '偿还借款', color: 'warning' },
+    supplement_liquidity: { label: '补充流动资金', color: 'default' },
+    merge_acquisition: { label: '并购重组', color: 'success' },
+    other: { label: '其他', color: 'default' }
   };
 
   /**
    * 记录状态映射配置
-   * 定义资金使用记录的审核状态
    */
   const recordStatusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    pending: { label: '待审核', color: 'warning' },   // 等待审核
-    approved: { label: '已审核', color: 'success' },  // 审核通过
-    rejected: { label: '已驳回', color: 'danger' }    // 审核驳回
+    pending: { label: '待审核', color: 'warning' },
+    approved: { label: '已审核', color: 'success' },
+    rejected: { label: '已驳回', color: 'danger' }
   };
 
   /**
    * 变更申请状态映射配置
-   * 定义用途变更申请的审批状态
    */
   const changeStatusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    pending: { label: '审批中', color: 'warning' },   // 审批流程中
-    approved: { label: '已通过', color: 'success' },  // 审批通过
-    rejected: { label: '已驳回', color: 'danger' }    // 审批驳回
+    pending: { label: '审批中', color: 'warning' },
+    approved: { label: '已通过', color: 'success' },
+    rejected: { label: '已驳回', color: 'danger' }
   };
 
-  // 统计数据计算
+  /**
+   * 统计数据计算（基于store中的fundUseRecords）
+   */
   const totalRaised = mockFundUsagePlans.reduce((sum, p) => sum + p.plannedAmount, 0) / 10000;
-  const totalUsed = mockFundUsagePlans.reduce((sum, p) => sum + p.usedAmount, 0) / 10000;
+  const totalUsed = fundUseRecords.reduce((sum, r) => sum + r.amount, 0) / 10000;
   const totalRemaining = totalRaised - totalUsed;
   const pendingChanges = mockFundChangeRequests.filter(c => c.status === 'pending').length;
 
   /**
-   * 资金使用计划表格列配置
-   * 使用计划列表的列定义
+   * 使用计划表格列配置
    */
   const usageColumns: Column<FundUsagePlan>[] = [
-    // 债券名称列：显示关联债券名称
     {
       key: 'bondName',
       title: '债券名称',
       width: '160px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
-    // 项目/用途名称列：显示具体用途名称
     {
       key: 'projectName',
       title: '项目/用途名称',
       width: '220px',
       render: (record) => <span className="text-sm text-gray-700">{record.projectName}</span>
     },
-    // 用途类型列：显示用途分类标签
     {
       key: 'purposeType',
       title: '用途类型',
@@ -101,7 +127,6 @@ const FundTracker: React.FC = () => {
         </Badge>
       )
     },
-    // 计划金额列：显示计划投入金额（万元）
     {
       key: 'plannedAmount',
       title: '计划金额(万)',
@@ -109,7 +134,6 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-gray-900">{record.plannedAmount.toLocaleString()}</span>
     },
-    // 已使用列：显示已投入金额（万元），深蓝色高亮
     {
       key: 'usedAmount',
       title: '已使用(万)',
@@ -117,7 +141,6 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm text-[#1e3a8a] font-medium">{record.usedAmount.toLocaleString()}</span>
     },
-    // 使用进度列：进度条显示使用百分比，根据进度变色
     {
       key: 'progressPercent',
       title: '使用进度',
@@ -143,32 +166,28 @@ const FundTracker: React.FC = () => {
   ];
 
   /**
-   * 资金使用记录表格列配置
-   * 使用台账（实际支出记录）的列定义
+   * 资金使用记录（台账）表格列配置
+   * 增加查看和删除操作按钮
    */
   const recordColumns: Column<FundUseRecord>[] = [
-    // 债券名称列：显示关联债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '150px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
-    // 用途项目列：显示资金投向的项目
     {
       key: 'projectName',
       title: '用途项目',
-      width: '200px',
+      width: '160px',
       render: (record) => <span className="text-sm text-gray-700">{record.projectName}</span>
     },
-    // 使用日期列：显示资金支出日期
     {
       key: 'useDate',
       title: '使用日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.useDate}</span>
     },
-    // 金额列：显示支出金额（万元），橙色高亮
     {
       key: 'amount',
       title: '金额(万)',
@@ -176,21 +195,12 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-[#d97706]">{record.amount.toLocaleString()}</span>
     },
-    // 收款方列：显示资金接收方名称
     {
       key: 'payee',
       title: '收款方',
-      width: '200px',
-      render: (record) => <span className="text-sm text-gray-700 truncate block max-w-[180px]">{record.payee}</span>
+      width: '160px',
+      render: (record) => <span className="text-sm text-gray-700 truncate block max-w-[140px]">{record.payee}</span>
     },
-    // 凭证号列：显示会计凭证编号，等宽字体显示
-    {
-      key: 'voucherNumber',
-      title: '凭证号',
-      width: '130px',
-      render: (record) => <span className="text-sm text-gray-500 font-mono">{record.voucherNumber}</span>
-    },
-    // 状态列：显示审核状态
     {
       key: 'status',
       title: '状态',
@@ -200,36 +210,58 @@ const FundTracker: React.FC = () => {
           {recordStatusMap[record.status]?.label || record.statusName}
         </Badge>
       )
+    },
+    {
+      key: 'actions',
+      title: '操作',
+      width: '140px',
+      align: 'center',
+      render: (record) => (
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => handleViewRecordDetail(record)}
+          >
+            <Eye className="w-4 h-4" />
+            <span className="ml-1">查看</span>
+          </Button>
+          <Button
+            variant="text"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => handleDeleteRecordClick(record)}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="ml-1">删除</span>
+          </Button>
+        </div>
+      )
     }
   ];
 
   /**
    * 用途变更申请表格列配置
-   * 资金用途变更申请列表的列定义
    */
   const changeColumns: Column<FundChangeRequest>[] = [
-    // 债券名称列：显示关联债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '150px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
-    // 原用途列：显示变更前的用途
     {
       key: 'originalPurpose',
       title: '原用途',
-      width: '180px',
-      render: (record) => <span className="text-sm text-gray-600">{record.originalPurpose}</span>
+      width: '150px',
+      render: (record) => <span className="text-sm text-gray-600 truncate block max-w-[130px]">{record.originalPurpose}</span>
     },
-    // 新用途列：显示变更后的用途
     {
       key: 'newPurpose',
       title: '新用途',
-      width: '180px',
-      render: (record) => <span className="text-sm text-gray-700">{record.newPurpose}</span>
+      width: '150px',
+      render: (record) => <span className="text-sm text-gray-700 truncate block max-w-[130px]">{record.newPurpose}</span>
     },
-    // 变更金额列：显示涉及变更的金额（万元），红色高亮
     {
       key: 'changeAmount',
       title: '变更金额(万)',
@@ -237,21 +269,18 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-red-600">{record.changeAmount.toLocaleString()}</span>
     },
-    // 申请日期列：显示提交申请的日期
     {
       key: 'applyDate',
       title: '申请日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.applyDate}</span>
     },
-    // 申请人列：显示提交申请的人员
     {
       key: 'applicant',
       title: '申请人',
       width: '90px',
       render: (record) => <span className="text-sm text-gray-700">{record.applicant}</span>
     },
-    // 状态列：显示审批状态
     {
       key: 'status',
       title: '状态',
@@ -266,9 +295,8 @@ const FundTracker: React.FC = () => {
 
   /**
    * 专户总览数据处理
-   * 将专户数据与资金计划关联，补充债券名称信息
    */
-  const accountColumns = mockSpecialAccounts.map(account => ({
+  const accountColumns = mockSpecialAccounts.map((account: SpecialAccount) => ({
     id: account.id,
     bondName: mockFundUsagePlans.find(p => p.bondId === account.bondId)?.bondName || '-',
     bankName: account.bankName,
@@ -279,31 +307,26 @@ const FundTracker: React.FC = () => {
 
   /**
    * 专户总览表格列配置
-   * 募集资金专户列表的列定义
    */
   const overviewColumns: Column<typeof accountColumns[0]>[] = [
-    // 债券名称列：显示专户对应的债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '160px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
-    // 开户银行列：显示专户开立的银行名称
     {
       key: 'bankName',
       title: '开户银行',
       width: '200px',
       render: (record) => <span className="text-sm text-gray-700">{record.bankName}</span>
     },
-    // 专户账号列：显示银行账号，等宽字体
     {
       key: 'accountNumber',
       title: '专户账号',
       width: '180px',
       render: (record) => <span className="text-sm text-gray-500 font-mono">{record.accountNumber}</span>
     },
-    // 账户余额列：显示当前专户余额（万元），大号橙色字体突出
     {
       key: 'balance',
       title: '账户余额(万)',
@@ -311,46 +334,27 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-lg font-bold text-[#d97706]">{record.balance.toLocaleString()}</span>
     },
-    // 更新日期列：显示最后一次对账日期
     {
       key: 'lastUpdateDate',
       title: '更新日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.lastUpdateDate}</span>
-    },
-    // 操作列：查看详情按钮
-    {
-      key: 'actions',
-      title: '操作',
-      width: '100px',
-      align: 'center',
-      render: () => (
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="text" size="sm">
-            <Eye className="w-4 h-4" />
-          </Button>
-        </div>
-      )
     }
   ];
 
   /**
-   * 获取当前表格数据
-   * 根据激活的标签页返回对应数据，并应用搜索过滤
+   * 获取当前表格数据（使用store中的fundUseRecords）
    */
   const getTableData = () => {
     switch (activeTab) {
       case 'overview':
-        // 专户概览：按债券名称搜索
         return accountColumns.filter(a => a.bondName.includes(searchText));
       case 'usage':
-        // 使用计划：按债券名称或项目名称搜索
         return mockFundUsagePlans.filter(p => p.bondName.includes(searchText) || p.projectName.includes(searchText));
       case 'records':
-        // 使用台账：按债券名称搜索
-        return mockFundUseRecords.filter(r => r.bondName.includes(searchText));
+        // 使用store中的动态数据
+        return fundUseRecords.filter(r => r.bondName.includes(searchText) || r.projectName.includes(searchText));
       case 'changes':
-        // 用途变更：按债券名称搜索
         return mockFundChangeRequests.filter(c => c.bondName.includes(searchText));
       default:
         return [];
@@ -359,7 +363,6 @@ const FundTracker: React.FC = () => {
 
   /**
    * 获取当前表格列配置
-   * 根据激活的标签页返回对应的列配置
    */
   const getColumns = () => {
     switch (activeTab) {
@@ -377,13 +380,85 @@ const FundTracker: React.FC = () => {
   };
 
   /**
-   * 标签页配置数组
-   * Tab切换逻辑：点击切换时重置页码到第1页
+   * 打开新增使用记录弹窗
+   */
+  const handleOpenAddRecordModal = () => {
+    setAddRecordFormData({
+      bondId: '',
+      projectName: '',
+      useDate: '',
+      amount: '',
+      payee: '',
+      purpose: ''
+    });
+    setIsAddRecordModalOpen(true);
+  };
+
+  /**
+   * 提交新增使用记录表单
+   */
+  const handleAddRecordSubmit = () => {
+    const selectedBond = bonds.find((b: Bond) => b.id === addRecordFormData.bondId);
+    if (!selectedBond || !addRecordFormData.projectName || !addRecordFormData.useDate ||
+        !addRecordFormData.amount || !addRecordFormData.payee || !addRecordFormData.purpose) {
+      alert('请填写完整信息');
+      return;
+    }
+
+    // 构建新记录数据
+    const newRecord: Omit<FundUseRecord, 'id'> = {
+      bondId: selectedBond.id,
+      bondName: selectedBond.bondName,
+      usagePlanId: '',
+      projectName: addRecordFormData.projectName,
+      useDate: addRecordFormData.useDate,
+      amount: parseFloat(addRecordFormData.amount),
+      payee: addRecordFormData.payee,
+      bankAccount: '',
+      purpose: addRecordFormData.purpose,
+      operator: '当前用户',
+      status: 'pending',
+      statusName: '待审核'
+    };
+
+    addFundUseRecord(newRecord);
+    setIsAddRecordModalOpen(false);
+  };
+
+  /**
+   * 查看记录详情
+   */
+  const handleViewRecordDetail = (record: FundUseRecord) => {
+    setSelectedRecord(record);
+    setIsRecordDetailModalOpen(true);
+  };
+
+  /**
+   * 打开删除确认弹窗
+   */
+  const handleDeleteRecordClick = (record: FundUseRecord) => {
+    setSelectedRecord(record);
+    setIsDeleteRecordConfirmOpen(true);
+  };
+
+  /**
+   * 确认删除记录
+   */
+  const handleConfirmDeleteRecord = () => {
+    if (selectedRecord) {
+      deleteFundUseRecord(selectedRecord.id);
+      setIsDeleteRecordConfirmOpen(false);
+      setSelectedRecord(null);
+    }
+  };
+
+  /**
+   * 标签页配置
    */
   const tabs = [
     { key: 'overview', label: '专户概览', count: mockSpecialAccounts.length },
     { key: 'usage', label: '使用计划', count: mockFundUsagePlans.length },
-    { key: 'records', label: '使用台账', count: mockFundUseRecords.length },
+    { key: 'records', label: '使用台账', count: fundUseRecords.length },
     { key: 'changes', label: '用途变更', count: mockFundChangeRequests.length }
   ];
 
@@ -395,30 +470,21 @@ const FundTracker: React.FC = () => {
         breadcrumbs={[
           { title: '募集资金追踪', href: '/fund-tracker' }
         ]}
-        extra={
-          <Button 
-            variant="primary"
-            onClick={() => alert('新增资金使用记录功能开发中...')}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            新增资金使用
-          </Button>
-        }
       />
 
-      {/* 统计卡片 */}
+      {/* 统计卡片区域 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="累计募集资金(亿)"
           value={totalRaised.toFixed(2)}
           icon={Wallet}
-          gradient
+          className="border-l-4 border-[#1e3a8a]"
         />
         <StatCard
           title="累计使用(亿)"
           value={totalUsed.toFixed(2)}
           icon={TrendingUp}
-          className="border-l-4 border-[#1e3a8a]"
+          className="border-l-4 border-[#d97706]"
         />
         <StatCard
           title="剩余资金(亿)"
@@ -430,7 +496,6 @@ const FundTracker: React.FC = () => {
           title="待审批变更"
           value={pendingChanges}
           icon={FileCheck}
-          trendLabel="项"
           className="border-l-4 border-amber-500"
         />
       </div>
@@ -438,35 +503,50 @@ const FundTracker: React.FC = () => {
       {/* 标签页切换区域 */}
       <Card bodyClassName="p-0">
         <div className="border-b border-gray-200">
-          <div className="flex">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setActiveTab(tab.key as typeof activeTab);
-                  setCurrentPage(1);
-                }}
-                className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.key
-                    ? 'border-[#1e3a8a] text-[#1e3a8a]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
-                  activeTab === tab.key ? 'bg-blue-100 text-[#1e3a8a]' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+          <div className="flex items-center justify-between">
+            <div className="flex">
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setActiveTab(tab.key as typeof activeTab);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-[#1e3a8a] text-[#1e3a8a]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`ml-2 px-1.5 py-0.5 rounded-full text-xs ${
+                    activeTab === tab.key ? 'bg-blue-100 text-[#1e3a8a]' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {/* 仅在"使用台账"Tab下显示新增按钮 */}
+            {activeTab === 'records' && (
+              <div className="pr-4">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleOpenAddRecordModal}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  新增使用记录
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* 搜索栏 */}
         <div className="p-4 border-b border-gray-100">
           <SearchFilter
-            searchPlaceholder="搜索债券名称"
+            searchPlaceholder={activeTab === 'records' ? '搜索债券名称或项目名称' : '搜索债券名称'}
             searchValue={searchText}
             onSearchChange={(val) => {
               setSearchText(val);
@@ -488,6 +568,225 @@ const FundTracker: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* 新增使用记录弹窗 */}
+      <Modal
+        open={isAddRecordModalOpen}
+        title="新增资金使用记录"
+        width="lg"
+        onClose={() => setIsAddRecordModalOpen(false)}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setIsAddRecordModalOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAddRecordSubmit}
+            >
+              确定提交
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* 债券选择 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              债券选择 <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={addRecordFormData.bondId}
+              onChange={(e) => setAddRecordFormData({ ...addRecordFormData, bondId: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+            >
+              <option value="">请选择债券</option>
+              {bonds.map((bond: Bond) => (
+                <option key={bond.id} value={bond.id}>
+                  {bond.bondName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* 项目名称 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                项目名称 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={addRecordFormData.projectName}
+                onChange={(e) => setAddRecordFormData({ ...addRecordFormData, projectName: e.target.value })}
+                placeholder="请输入项目名称"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 使用日期 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                使用日期 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={addRecordFormData.useDate}
+                onChange={(e) => setAddRecordFormData({ ...addRecordFormData, useDate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 使用金额 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                使用金额(万元) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={addRecordFormData.amount}
+                onChange={(e) => setAddRecordFormData({ ...addRecordFormData, amount: e.target.value })}
+                placeholder="请输入使用金额"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+
+            {/* 收款方 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                收款方 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={addRecordFormData.payee}
+                onChange={(e) => setAddRecordFormData({ ...addRecordFormData, payee: e.target.value })}
+                placeholder="请输入收款方名称"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* 用途说明 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              用途说明 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={addRecordFormData.purpose}
+              onChange={(e) => setAddRecordFormData({ ...addRecordFormData, purpose: e.target.value })}
+              placeholder="请详细说明资金用途"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a]/20 focus:border-[#1e3a8a] outline-none transition-colors resize-none"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* 使用记录详情弹窗 */}
+      <Modal
+        open={isRecordDetailModalOpen}
+        title="资金使用记录详情"
+        width="lg"
+        onClose={() => setIsRecordDetailModalOpen(false)}
+        footer={
+          <Button
+            variant="secondary"
+            onClick={() => setIsRecordDetailModalOpen(false)}
+          >
+            关闭
+          </Button>
+        }
+      >
+        {selectedRecord && (
+          <div className="space-y-4">
+            <div className="bg-[#1e3a8a]/5 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-[#1e3a8a]">{selectedRecord.bondName}</h4>
+                  <p className="text-sm text-gray-500 mt-1">{selectedRecord.projectName}</p>
+                </div>
+                <Badge variant={recordStatusMap[selectedRecord.status]?.color || 'default'}>
+                  {recordStatusMap[selectedRecord.status]?.label || selectedRecord.statusName}
+                </Badge>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500">使用日期</div>
+                <div className="text-base font-medium text-gray-900 mt-1">{selectedRecord.useDate}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">使用金额</div>
+                <div className="text-lg font-bold text-[#d97706] mt-1">{selectedRecord.amount.toLocaleString()} 万元</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">收款方</div>
+                <div className="text-base text-gray-700 mt-1">{selectedRecord.payee}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">经办人</div>
+                <div className="text-base text-gray-700 mt-1">{selectedRecord.operator}</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">用途说明</div>
+              <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                {selectedRecord.purpose}
+              </div>
+            </div>
+            {selectedRecord.remark && (
+              <div>
+                <div className="text-sm text-gray-500 mb-2">备注</div>
+                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                  {selectedRecord.remark}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* 删除记录确认弹窗 */}
+      <Modal
+        open={isDeleteRecordConfirmOpen}
+        title="确认删除"
+        width="sm"
+        onClose={() => setIsDeleteRecordConfirmOpen(false)}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteRecordConfirmOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleConfirmDeleteRecord}
+            >
+              确认删除
+            </Button>
+          </>
+        }
+      >
+        <div className="py-4">
+          <p className="text-gray-700">
+            确定要删除该使用记录吗？
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            债券：<span className="font-medium text-[#1e3a8a]">{selectedRecord?.bondName}</span>
+          </p>
+          <p className="text-sm text-gray-500">
+            金额：<span className="font-medium text-[#d97706]">{selectedRecord?.amount.toLocaleString()} 万元</span>
+          </p>
+          <p className="text-sm text-red-500 mt-2">此操作不可恢复，请谨慎操作。</p>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -20,48 +20,48 @@ const purposeTypeNames: Record<FundPurposeType, string> = {
 // 募集资金专户信息
 export const mockSpecialAccounts: SpecialAccount[] = [
   {
-    id: 'account_001',
-    bondId: 'bond_001',
+    id: 'specialAccountHuaxin01',
+    bondId: 'bond24Huaxin01',
     bankName: '中国工商银行华鑫支行',
     accountNumber: '6222 0212 **** 8899',
     balance: 86500,
     lastUpdateDate: '2025-06-15'
   },
   {
-    id: 'account_002',
-    bondId: 'bond_002',
+    id: 'specialAccountMingtai01',
+    bondId: 'bond25Mingtai01',
     bankName: '中国建设银行明泰支行',
     accountNumber: '6227 0025 **** 3344',
     balance: 42800,
     lastUpdateDate: '2025-06-18'
   },
   {
-    id: 'account_003',
-    bondId: 'bond_005',
+    id: 'specialAccountHuaxin02',
+    bondId: 'bond24Huaxin02',
     bankName: '中国银行江湾支行',
     accountNumber: '6217 8536 **** 7788',
     balance: 95000,
     lastUpdateDate: '2025-06-10'
   },
   {
-    id: 'account_004',
-    bondId: 'bond_007',
+    id: 'specialAccountJiangwan01',
+    bondId: 'bond24JiangwanFinance',
     bankName: '招商银行交通支行',
     accountNumber: '6226 0987 **** 2233',
     balance: 185625,
     lastUpdateDate: '2025-06-20'
   },
   {
-    id: 'account_005',
-    bondId: 'bond_008',
+    id: 'specialAccountKechuang01',
+    bondId: 'bond26KechuangGreen01',
     bankName: '兴业银行科创支行',
     accountNumber: '6229 0864 **** 5566',
     balance: 60000,
     lastUpdateDate: '2026-03-05'
   },
   {
-    id: 'account_006',
-    bondId: 'bond_009',
+    id: 'specialAccountHuaxin03',
+    bondId: 'bond23Huaxin03',
     bankName: '中信证券股份有限公司',
     accountNumber: '7000 1234 **** 9900',
     balance: 98600,
@@ -72,8 +72,8 @@ export const mockSpecialAccounts: SpecialAccount[] = [
 // 资金使用计划
 export const mockFundUsagePlans: FundUsagePlan[] = [
   {
-    id: 'plan_001',
-    bondId: 'bond_001',
+    id: 'fundUsePlanHuaxin01',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     projectName: '城东新区基础设施建设项目',
     purposeType: 'project',
@@ -84,8 +84,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 71
   },
   {
-    id: 'plan_002',
-    bondId: 'bond_001',
+    id: 'fundUsePlanHuaxin02',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     projectName: '偿还银行借款',
     purposeType: 'repay_debt',
@@ -96,8 +96,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 48
   },
   {
-    id: 'plan_003',
-    bondId: 'bond_001',
+    id: 'fundUsePlanHuaxin03',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     projectName: '补充营运资金',
     purposeType: 'supplement_liquidity',
@@ -108,8 +108,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 0
   },
   {
-    id: 'plan_004',
-    bondId: 'bond_002',
+    id: 'fundUsePlanMingtai01',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     projectName: '锂电池生产线扩建项目',
     purposeType: 'project',
@@ -120,8 +120,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 64
   },
   {
-    id: 'plan_005',
-    bondId: 'bond_002',
+    id: 'fundUsePlanMingtai02',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     projectName: '补充流动资金',
     purposeType: 'supplement_liquidity',
@@ -132,8 +132,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 48
   },
   {
-    id: 'plan_006',
-    bondId: 'bond_005',
+    id: 'fundUsePlanHuaxin04',
+    bondId: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
     projectName: '城市轨道交通配套项目',
     purposeType: 'project',
@@ -144,8 +144,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 31
   },
   {
-    id: 'plan_007',
-    bondId: 'bond_005',
+    id: 'fundUsePlanHuaxin05',
+    bondId: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
     projectName: '偿还存量债务',
     purposeType: 'repay_debt',
@@ -156,8 +156,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 0
   },
   {
-    id: 'plan_008',
-    bondId: 'bond_007',
+    id: 'fundUsePlanJiangwan01',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     projectName: '高速公路改扩建工程',
     purposeType: 'project',
@@ -168,8 +168,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 36
   },
   {
-    id: 'plan_009',
-    bondId: 'bond_007',
+    id: 'fundUsePlanJiangwan02',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     projectName: '补充流动资金',
     purposeType: 'supplement_liquidity',
@@ -180,8 +180,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 0
   },
   {
-    id: 'plan_010',
-    bondId: 'bond_008',
+    id: 'fundUsePlanKechuang01',
+    bondId: 'bond26KechuangGreen01',
     bondName: '26科创绿色债01',
     projectName: '智能工厂绿色改造项目',
     purposeType: 'project',
@@ -192,8 +192,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 0
   },
   {
-    id: 'plan_011',
-    bondId: 'bond_009',
+    id: 'fundUsePlanHuaxin06',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     projectName: '保障性住房建设项目',
     purposeType: 'project',
@@ -204,8 +204,8 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
     progressPercent: 72
   },
   {
-    id: 'plan_012',
-    bondId: 'bond_009',
+    id: 'fundUsePlanHuaxin07',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     projectName: '偿还金融机构借款',
     purposeType: 'repay_debt',
@@ -220,10 +220,10 @@ export const mockFundUsagePlans: FundUsagePlan[] = [
 // 资金使用台账记录
 export const mockFundUseRecords: FundUseRecord[] = [
   {
-    id: 'record_001',
-    bondId: 'bond_001',
+    id: 'fundUseRecord001',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
-    usagePlanId: 'plan_001',
+    usagePlanId: 'fundUsePlanHuaxin01',
     projectName: '城东新区基础设施建设项目',
     useDate: '2024-05-20',
     amount: 25000,
@@ -237,10 +237,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_002',
-    bondId: 'bond_001',
+    id: 'fundUseRecord002',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
-    usagePlanId: 'plan_001',
+    usagePlanId: 'fundUsePlanHuaxin01',
     projectName: '城东新区基础设施建设项目',
     useDate: '2024-08-15',
     amount: 35000,
@@ -254,10 +254,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_003',
-    bondId: 'bond_001',
+    id: 'fundUseRecord003',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
-    usagePlanId: 'plan_001',
+    usagePlanId: 'fundUsePlanHuaxin01',
     projectName: '城东新区基础设施建设项目',
     useDate: '2024-11-30',
     amount: 25000,
@@ -271,10 +271,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_004',
-    bondId: 'bond_001',
+    id: 'fundUseRecord004',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
-    usagePlanId: 'plan_002',
+    usagePlanId: 'fundUsePlanHuaxin02',
     projectName: '偿还银行借款',
     useDate: '2025-01-10',
     amount: 28500,
@@ -288,10 +288,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_005',
-    bondId: 'bond_002',
+    id: 'fundUseRecord005',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
-    usagePlanId: 'plan_004',
+    usagePlanId: 'fundUsePlanMingtai01',
     projectName: '锂电池生产线扩建项目',
     useDate: '2025-03-05',
     amount: 18200,
@@ -305,10 +305,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_006',
-    bondId: 'bond_002',
+    id: 'fundUseRecord006',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
-    usagePlanId: 'plan_004',
+    usagePlanId: 'fundUsePlanMingtai01',
     projectName: '锂电池生产线扩建项目',
     useDate: '2025-05-18',
     amount: 20000,
@@ -321,10 +321,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '待审核'
   },
   {
-    id: 'record_007',
-    bondId: 'bond_002',
+    id: 'fundUseRecord007',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
-    usagePlanId: 'plan_005',
+    usagePlanId: 'fundUsePlanMingtai02',
     projectName: '补充流动资金',
     useDate: '2025-04-22',
     amount: 19000,
@@ -338,10 +338,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_008',
-    bondId: 'bond_005',
+    id: 'fundUseRecord008',
+    bondId: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
-    usagePlanId: 'plan_006',
+    usagePlanId: 'fundUsePlanHuaxin04',
     projectName: '城市轨道交通配套项目',
     useDate: '2025-02-28',
     amount: 25000,
@@ -355,10 +355,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_009',
-    bondId: 'bond_007',
+    id: 'fundUseRecord009',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
-    usagePlanId: 'plan_008',
+    usagePlanId: 'fundUsePlanJiangwan01',
     projectName: '高速公路改扩建工程',
     useDate: '2025-03-15',
     amount: 64375,
@@ -372,10 +372,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_010',
-    bondId: 'bond_009',
+    id: 'fundUseRecord010',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
-    usagePlanId: 'plan_011',
+    usagePlanId: 'fundUsePlanHuaxin06',
     projectName: '保障性住房建设项目',
     useDate: '2024-06-10',
     amount: 42400,
@@ -389,10 +389,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_011',
-    bondId: 'bond_009',
+    id: 'fundUseRecord011',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
-    usagePlanId: 'plan_011',
+    usagePlanId: 'fundUsePlanHuaxin06',
     projectName: '保障性住房建设项目',
     useDate: '2024-12-05',
     amount: 30000,
@@ -406,10 +406,10 @@ export const mockFundUseRecords: FundUseRecord[] = [
     statusName: '已审核'
   },
   {
-    id: 'record_012',
-    bondId: 'bond_009',
+    id: 'fundUseRecord012',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
-    usagePlanId: 'plan_012',
+    usagePlanId: 'fundUsePlanHuaxin07',
     projectName: '偿还金融机构借款',
     useDate: '2025-05-08',
     amount: 9000,
@@ -427,8 +427,8 @@ export const mockFundUseRecords: FundUseRecord[] = [
 // 用途变更申请
 export const mockFundChangeRequests: FundChangeRequest[] = [
   {
-    id: 'change_001',
-    bondId: 'bond_001',
+    id: 'fundChangeRequest01',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     originalPurpose: '城东新区基础设施建设项目',
     newPurpose: '补充流动资金',
@@ -443,8 +443,8 @@ export const mockFundChangeRequests: FundChangeRequest[] = [
     approvalOpinion: '同意本次用途变更，请严格按照募集资金管理规定执行，确保资金安全。'
   },
   {
-    id: 'change_002',
-    bondId: 'bond_002',
+    id: 'fundChangeRequest02',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     originalPurpose: '锂电池生产线扩建项目',
     newPurpose: '偿还银行借款',
@@ -456,8 +456,8 @@ export const mockFundChangeRequests: FundChangeRequest[] = [
     statusName: '审批中'
   },
   {
-    id: 'change_003',
-    bondId: 'bond_009',
+    id: 'fundChangeRequest03',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     originalPurpose: '偿还金融机构借款',
     newPurpose: '保障性住房建设项目',
@@ -472,8 +472,8 @@ export const mockFundChangeRequests: FundChangeRequest[] = [
     approvalOpinion: '鉴于本次变更金额较大，且涉及用途性质变化，需进一步补充项目资金需求测算依据，并召开债券持有人会议审议。'
   },
   {
-    id: 'change_004',
-    bondId: 'bond_007',
+    id: 'fundChangeRequest04',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     originalPurpose: '补充流动资金',
     newPurpose: '高速公路改扩建工程',
@@ -489,7 +489,7 @@ export const mockFundChangeRequests: FundChangeRequest[] = [
 // 资金总览数据
 export const mockFundOverviewList: FundOverview[] = [
   {
-    bondId: 'bond_001',
+    bondId: 'bond24Huaxin01',
     bondName: '24华鑫城投债01',
     totalRaised: 200000,
     totalUsed: 113500,
@@ -502,7 +502,7 @@ export const mockFundOverviewList: FundOverview[] = [
     ]
   },
   {
-    bondId: 'bond_002',
+    bondId: 'bond25Mingtai01',
     bondName: '25明泰新能债01',
     totalRaised: 100000,
     totalUsed: 57200,
@@ -514,7 +514,7 @@ export const mockFundOverviewList: FundOverview[] = [
     ]
   },
   {
-    bondId: 'bond_005',
+    bondId: 'bond24Huaxin02',
     bondName: '24华鑫城投债02',
     totalRaised: 120000,
     totalUsed: 25000,
@@ -526,7 +526,7 @@ export const mockFundOverviewList: FundOverview[] = [
     ]
   },
   {
-    bondId: 'bond_007',
+    bondId: 'bond24JiangwanFinance',
     bondName: '24江湾金融债01',
     totalRaised: 250000,
     totalUsed: 64375,
@@ -538,7 +538,7 @@ export const mockFundOverviewList: FundOverview[] = [
     ]
   },
   {
-    bondId: 'bond_008',
+    bondId: 'bond26KechuangGreen01',
     bondName: '26科创绿色债01',
     totalRaised: 60000,
     totalUsed: 0,
@@ -549,7 +549,7 @@ export const mockFundOverviewList: FundOverview[] = [
     ]
   },
   {
-    bondId: 'bond_009',
+    bondId: 'bond23Huaxin03',
     bondName: '23华鑫城投债03',
     totalRaised: 180000,
     totalUsed: 81400,

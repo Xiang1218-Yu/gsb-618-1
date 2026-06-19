@@ -5,7 +5,11 @@ import {
   DollarSign,
   FileText,
   Eye,
-  Bell
+  Bell,
+  CheckCircle2,
+  Building2,
+  CreditCard,
+  FileSpreadsheet
 } from 'lucide-react';
 import {
   Card,
@@ -14,7 +18,8 @@ import {
   Button,
   DataTable,
   PageHeader,
-  SearchFilter
+  SearchFilter,
+  Modal
 } from '@/components/UI';
 import type { Column } from '@/components/UI/DataTable';
 import { mockDurationBonds, mockInterestPayments, mockDisclosureRecords } from '@/data/mockBonds';
@@ -27,6 +32,18 @@ const Duration: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  // ========== Modal相关状态 ==========
+  // 债券详情弹窗：控制显示/隐藏、当前选中的债券数据、详情内Tab
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedBond, setSelectedBond] = useState<DurationBond | null>(null);
+  const [detailTab, setDetailTab] = useState<'basic' | 'payment' | 'disclosure'>('basic');
+
+  // 付息提醒弹窗：控制显示/隐藏、当前选中债券、备注内容、是否发送成功
+  const [remindModalOpen, setRemindModalOpen] = useState(false);
+  const [remindBond, setRemindBond] = useState<DurationBond | null>(null);
+  const [remindNote, setRemindNote] = useState('');
+  const [remindSent, setRemindSent] = useState(false);
 
   /**
    * 付息状态映射配置
@@ -53,10 +70,92 @@ const Duration: React.FC = () => {
     total: mockDurationBonds.length,
     totalAmount: mockDurationBonds.reduce((sum, b) => sum + b.issueAmount, 0),
     pendingPayment: mockInterestPayments.filter(p => p.status === 'pending').length,
-    nextPaymentDate: mockDurationBonds.reduce((min, b) => 
+    nextPaymentDate: mockDurationBonds.reduce((min, b) =>
       !min || b.remainingDays < min.remainingDays ? b : min,
       null as DurationBond | null
     )
+  };
+
+  /**
+   * 打开债券详情弹窗
+   * @param bond 要查看的债券数据
+   */
+  const openDetailModal = (bond: DurationBond) => {
+    setSelectedBond(bond);
+    setDetailTab('basic');
+    setDetailModalOpen(true);
+  };
+
+  /**
+   * 打开付息提醒弹窗
+   * @param bond 要提醒的债券数据
+   */
+  const openRemindModal = (bond: DurationBond) => {
+    setRemindBond(bond);
+    setRemindNote('');
+    setRemindSent(false);
+    setRemindModalOpen(true);
+  };
+
+  /**
+   * 关闭付息提醒弹窗并重置状态
+   */
+  const closeRemindModal = () => {
+    setRemindModalOpen(false);
+    setRemindBond(null);
+    setRemindNote('');
+    setRemindSent(false);
+  };
+
+  /**
+   * 发送付息提醒
+   * 在Modal内显示成功提示，2秒后自动关闭
+   */
+  const handleSendRemind = () => {
+    setRemindSent(true);
+    setTimeout(() => {
+      closeRemindModal();
+    }, 2000);
+  };
+
+  /**
+   * 获取当前债券关联的付息记录
+   */
+  const getBondPayments = (bondId: string) => {
+    return mockInterestPayments.filter(p => p.bondId === bondId);
+  };
+
+  /**
+   * 获取当前债券关联的信息披露记录
+   */
+  const getBondDisclosures = (bondId: string) => {
+    return mockDisclosureRecords.filter(d => d.bondId === bondId);
+  };
+
+  /**
+   * 打开付息记录详情弹窗
+   * 付息记录点击后，找到对应债券打开详情
+   */
+  const openPaymentDetail = (payment: InterestPayment) => {
+    const bond = mockDurationBonds.find(b => b.id === payment.bondId);
+    if (bond) {
+      setSelectedBond(bond);
+      setDetailTab('payment');
+      setDetailModalOpen(true);
+    }
+  };
+
+  /**
+   * 打开信息披露记录详情弹窗
+   * 披露记录点击后，找到对应债券打开详情
+   */
+  const openDisclosureDetail = (disclosure: DisclosureRecord) => {
+    const bond = mockDurationBonds.find(b => b.id === disclosure.bondId);
+    if (bond) {
+      setSelectedBond(bond);
+      setDetailTab('disclosure');
+      setDetailModalOpen(true);
+    }
   };
 
   /**
@@ -137,16 +236,29 @@ const Duration: React.FC = () => {
         </div>
       )
     },
-    // 操作列：查看详情按钮
+    // 操作列：查看详情和付息提醒按钮
     {
       key: 'actions',
       title: '操作',
-      width: '100px',
+      width: '160px',
       align: 'center',
-      render: () => (
+      render: (record) => (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="text" size="sm">
-            <Eye className="w-4 h-4" />
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => openDetailModal(record)}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            详情
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openRemindModal(record)}
+          >
+            <Bell className="w-4 h-4 mr-1" />
+            提醒
           </Button>
         </div>
       )
@@ -158,12 +270,19 @@ const Duration: React.FC = () => {
    * 利息支付记录列表的列定义
    */
   const paymentColumns: Column<InterestPayment>[] = [
-    // 债券名称列：显示关联的债券名称
+    // 债券名称列：显示关联的债券名称，点击可查看详情
     {
       key: 'bondName',
       title: '债券名称',
       width: '180px',
-      render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
+      render: (record) => (
+        <span
+          className="font-medium text-gray-900 hover:text-[#1e3a8a] cursor-pointer"
+          onClick={() => openPaymentDetail(record)}
+        >
+          {record.bondName}
+        </span>
+      )
     },
     // 类型列：固定显示"付息"标签
     {
@@ -203,6 +322,25 @@ const Duration: React.FC = () => {
       key: 'remark',
       title: '备注',
       render: (record) => <span className="text-sm text-gray-500">{record.remark || '-'}</span>
+    },
+    // 操作列：查看详情按钮
+    {
+      key: 'actions',
+      title: '操作',
+      width: '100px',
+      align: 'center',
+      render: (record) => (
+        <div className="flex items-center justify-center">
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => openPaymentDetail(record)}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            详情
+          </Button>
+        </div>
+      )
     }
   ];
 
@@ -211,21 +349,35 @@ const Duration: React.FC = () => {
    * 披露文件列表的列定义
    */
   const disclosureColumns: Column<DisclosureRecord>[] = [
-    // 债券名称列：关联查询显示所属债券名称
+    // 债券名称列：关联查询显示所属债券名称，点击可查看详情
     {
       key: 'bondName',
       title: '债券名称',
       width: '180px',
       render: (record) => {
         const bond = mockDurationBonds.find(b => b.id === record.bondId);
-        return <span className="font-medium text-gray-900">{bond?.bondName || '-'}</span>;
+        return (
+          <span
+            className="font-medium text-gray-900 hover:text-[#1e3a8a] cursor-pointer"
+            onClick={() => openDisclosureDetail(record)}
+          >
+            {bond?.bondName || '-'}
+          </span>
+        );
       }
     },
     // 公告标题列：可点击查看详情
     {
       key: 'title',
       title: '公告标题',
-      render: (record) => <span className="text-sm text-gray-700 hover:text-[#1e3a8a] cursor-pointer">{record.title}</span>
+      render: (record) => (
+        <span
+          className="text-sm text-gray-700 hover:text-[#1e3a8a] cursor-pointer"
+          onClick={() => openDisclosureDetail(record)}
+        >
+          {record.title}
+        </span>
+      )
     },
     // 类型列：显示披露文件类型
     {
@@ -244,6 +396,25 @@ const Duration: React.FC = () => {
       title: '披露日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.publishDate}</span>
+    },
+    // 操作列：查看详情按钮
+    {
+      key: 'actions',
+      title: '操作',
+      width: '100px',
+      align: 'center',
+      render: (record) => (
+        <div className="flex items-center justify-center">
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => openDisclosureDetail(record)}
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            详情
+          </Button>
+        </div>
+      )
     }
   ];
 
@@ -393,6 +564,261 @@ const Duration: React.FC = () => {
           }}
         />
       </Card>
+
+      {/* ========== 债券详情弹窗 ========== */}
+      <Modal
+        open={detailModalOpen}
+        title={selectedBond ? `${selectedBond.bondName} - 债券详情` : '债券详情'}
+        width="xl"
+        onClose={() => {
+          setDetailModalOpen(false);
+          setSelectedBond(null);
+        }}
+        footer={
+          <Button variant="secondary" onClick={() => setDetailModalOpen(false)}>
+            关闭
+          </Button>
+        }
+      >
+        {selectedBond && (
+          <div className="space-y-6">
+            {/* 详情内Tab切换 */}
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setDetailTab('basic')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  detailTab === 'basic'
+                    ? 'bg-white text-[#1e3a8a] shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                基本信息
+              </button>
+              <button
+                onClick={() => setDetailTab('payment')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  detailTab === 'payment'
+                    ? 'bg-white text-[#1e3a8a] shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <CreditCard className="w-4 h-4" />
+                付息兑付
+              </button>
+              <button
+                onClick={() => setDetailTab('disclosure')}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  detailTab === 'disclosure'
+                    ? 'bg-white text-[#1e3a8a] shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                信息披露
+              </button>
+            </div>
+
+            {/* 基本信息Tab内容 */}
+            {detailTab === 'basic' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">债券代码</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.bondCode}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">债券类型</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.bondTypeName}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">发行人</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.issuerName}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">主体评级</div>
+                    <div className="text-sm font-medium text-[#d97706]">{selectedBond.creditRating}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">发行规模</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.issueAmount} 亿元</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">票面利率</div>
+                    <div className="text-sm font-medium text-[#d97706]">{selectedBond.issueRate}%</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">发行日期</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.issueDate}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">到期日期</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.maturityDate}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">债券期限</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.termYears} 年</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs text-gray-500 mb-1">主承销商</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.leadUnderwriter}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4 col-span-2">
+                    <div className="text-xs text-gray-500 mb-1">受托管理人</div>
+                    <div className="text-sm font-medium text-gray-900">{selectedBond.trustee}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 付息兑付Tab内容 */}
+            {detailTab === 'payment' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <div className="text-xs text-blue-600 mb-1">下一付息日</div>
+                    <div className="text-lg font-bold text-[#1e3a8a]">{selectedBond.nextInterestDate}</div>
+                    <div className="text-xs text-blue-500 mt-1">剩余 {selectedBond.remainingDays} 天</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                    <div className="text-xs text-amber-600 mb-1">下次付息金额</div>
+                    <div className="text-lg font-bold text-[#d97706]">{selectedBond.nextInterestAmount.toLocaleString()}</div>
+                    <div className="text-xs text-amber-500 mt-1">万元</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                    <div className="text-xs text-green-600 mb-1">付息进度</div>
+                    <div className="text-lg font-bold text-green-700">{selectedBond.interestPaid}/{selectedBond.totalInterests}</div>
+                    <div className="text-xs text-green-500 mt-1">已完成/总期数</div>
+                  </div>
+                </div>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 border-b">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">付息日</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">金额(万)</th>
+                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500">状态</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">备注</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getBondPayments(selectedBond.id).map(payment => (
+                        <tr key={payment.id} className="border-b last:border-0">
+                          <td className="px-4 py-3 text-sm text-gray-700">{payment.paymentDate}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{payment.paymentAmount.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge variant={paymentStatusMap[payment.status]?.color || 'default'} dot>
+                              {paymentStatusMap[payment.status]?.label}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{payment.remark || '-'}</td>
+                        </tr>
+                      ))}
+                      {getBondPayments(selectedBond.id).length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">暂无付息记录</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* 信息披露Tab内容 */}
+            {detailTab === 'disclosure' && (
+              <div className="space-y-3">
+                {getBondDisclosures(selectedBond.id).map(disc => (
+                  <div key={disc.id} className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={disclosureTypeMap[disc.type]?.color || 'default'}>
+                          {disclosureTypeMap[disc.type]?.label}
+                        </Badge>
+                        <span className="text-xs text-gray-500">{disc.publishDate}</span>
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">{disc.title}</div>
+                    </div>
+                    <Button variant="text" size="sm">
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                {getBondDisclosures(selectedBond.id).length === 0 && (
+                  <div className="text-center py-8 text-gray-500 text-sm">暂无披露记录</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* ========== 付息提醒弹窗 ========== */}
+      <Modal
+        open={remindModalOpen}
+        title={remindSent ? '发送成功' : '付息提醒确认'}
+        width="md"
+        onClose={closeRemindModal}
+        footer={
+          remindSent ? (
+            <Button variant="primary" onClick={closeRemindModal}>
+              确定
+            </Button>
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="secondary" onClick={closeRemindModal}>
+                取消
+              </Button>
+              <Button variant="primary" onClick={handleSendRemind}>
+                <Bell className="w-4 h-4 mr-1" />
+                确认发送
+              </Button>
+            </div>
+          )
+        }
+      >
+        {remindSent ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">付息提醒已发送</h4>
+            <p className="text-sm text-gray-500">已成功向相关人员发送付息提醒通知</p>
+          </div>
+        ) : remindBond && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <div className="text-sm font-medium text-[#1e3a8a] mb-1">{remindBond.bondName}</div>
+              <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                <div>
+                  <span className="text-gray-500">下一付息日：</span>
+                  <span className="text-gray-900">{remindBond.nextInterestDate}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">剩余天数：</span>
+                  <span className="text-[#d97706] font-medium">{remindBond.remainingDays}天</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">付息金额：</span>
+                  <span className="text-gray-900">{remindBond.nextInterestAmount.toLocaleString()}万元</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                提醒备注（选填）
+              </label>
+              <textarea
+                value={remindNote}
+                onChange={(e) => setRemindNote(e.target.value)}
+                placeholder="请输入备注信息，将随提醒一同发送..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1e3a8a] focus:ring-1 focus:ring-[#1e3a8a]/20 resize-none"
+                rows={4}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
