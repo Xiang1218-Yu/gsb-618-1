@@ -12,6 +12,10 @@ import {
   mockRiskAlerts,
   mockTodoItems,
   mockDashboardStats,
+  mockDefaultProgressSteps,
+  mockReportTemplates,
+  mockRegulatorySubmissions,
+  mockSystemNotifications,
   fundUsageTrend,
   sentimentDistribution,
   sentimentSourceDistribution,
@@ -31,6 +35,10 @@ import type {
   Sentiment,
   Issuer,
   BondType,
+  DefaultProgressStep,
+  ReportTemplate,
+  RegulatorySubmission,
+  SystemNotification,
 } from '@/types';
 import { RiskLevel, BondStatus } from '@/types';
 
@@ -77,6 +85,28 @@ export interface BondFormData {
 }
 
 /**
+ * Toast提示类型
+ */
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+/**
+ * Toast提示接口
+ */
+export interface ToastItem {
+  /** Toast ID */
+  id: string;
+  /** 类型 */
+  type: ToastType;
+  /** 消息 */
+  message: string;
+}
+
+/**
+ * 全局弹窗类型
+ */
+export type ModalType = 'none' | 'previewReport' | 'profileSettings' | 'changePassword';
+
+/**
  * 应用全局状态接口
  */
 interface AppState {
@@ -102,6 +132,14 @@ interface AppState {
   riskAlerts: RiskAlert[];
   /** 待办事项列表 */
   todoItems: TodoItem[];
+  /** 违约处置进展步骤 */
+  defaultProgressSteps: DefaultProgressStep[];
+  /** 报告模板列表 */
+  reportTemplates: ReportTemplate[];
+  /** 监管报送数据 */
+  regulatorySubmissions: RegulatorySubmission[];
+  /** 系统通知 */
+  systemNotifications: SystemNotification[];
   /** 工作台统计数据 */
   dashboardStats: typeof mockDashboardStats;
   /** 资金使用趋势 */
@@ -118,6 +156,12 @@ interface AppState {
   selectedBondId: string | null;
   /** 全局搜索关键词 */
   globalSearchKeyword: string;
+  /** Toast提示列表 */
+  toasts: ToastItem[];
+  /** 当前打开的弹窗 */
+  activeModal: ModalType;
+  /** 预览报告ID */
+  previewReportId: string | null;
   /** 设置全局搜索关键词 */
   setGlobalSearchKeyword: (keyword: string) => void;
   /** 全局搜索 */
@@ -130,9 +174,23 @@ interface AppState {
   handleAlert: (alertId: string, status: RiskAlert['handleStatus'], remark?: string) => void;
   /** 完成待办事项 */
   completeTodo: (todoId: string) => void;
+  /** 执行监管报送 */
+  submitRegulatory: (submissionId: string) => void;
+  /** 标记通知已读 */
+  markNotificationRead: (notificationId: string) => void;
+  /** 标记所有通知已读 */
+  markAllNotificationsRead: () => void;
+  /** 打开弹窗 */
+  openModal: (modal: ModalType, data?: string) => void;
+  /** 关闭弹窗 */
+  closeModal: () => void;
+  /** 添加Toast */
+  showToast: (type: ToastType, message: string) => void;
+  /** 移除Toast */
+  removeToast: (toastId: string) => void;
   /** 根据ID获取债券详情 */
   getBondById: (id: string) => Bond | undefined;
-  /** 根据发行人ID获取发行人 */
+  /** 根据ID获取发行人 */
   getIssuerById: (id: string) => Issuer | undefined;
   /** 根据债券ID获取资金到账记录 */
   getFundReceivedByBondId: (bondId: string) => FundReceived[];
@@ -172,6 +230,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   complianceChecks: mockComplianceChecks,
   riskAlerts: mockRiskAlerts,
   todoItems: mockTodoItems,
+  defaultProgressSteps: mockDefaultProgressSteps,
+  reportTemplates: mockReportTemplates,
+  regulatorySubmissions: mockRegulatorySubmissions,
+  systemNotifications: mockSystemNotifications,
   dashboardStats: mockDashboardStats,
   fundUsageTrend,
   sentimentDistribution,
@@ -180,6 +242,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   debtRatioTrend,
   selectedBondId: null,
   globalSearchKeyword: '',
+  toasts: [],
+  activeModal: 'none',
+  previewReportId: null,
 
   /**
    * 设置全局搜索关键词
@@ -193,7 +258,7 @@ export const useAppStore = create<AppState>((set, get) => ({
    * @returns 搜索结果列表
    */
   globalSearch: (keyword: string) => {
-    const { bonds, riskAlerts, todoItems } = get();
+    const { bonds, riskAlerts, todoItems, issuers } = get();
     const results: SearchResultItem[] = [];
     const lowerKeyword = keyword.toLowerCase();
 
@@ -217,7 +282,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
 
     /** 搜索发行人 */
-    get().issuers.forEach((issuer) => {
+    issuers.forEach((issuer) => {
       if (issuer.issuerName.toLowerCase().includes(lowerKeyword)) {
         const issuerBonds = bonds.filter((b) => b.issuerId === issuer.id);
         if (issuerBonds.length > 0) {
@@ -301,6 +366,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
     }));
 
+    get().showToast('success', `债券项目"${data.bondName}"创建成功！`);
     return newBond;
   },
 
@@ -324,6 +390,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           : alert
       ),
     }));
+    get().showToast('success', '预警事项处理成功');
   },
 
   /**
@@ -339,6 +406,85 @@ export const useAppStore = create<AppState>((set, get) => ({
         ...state.dashboardStats,
         todoCount: Math.max(0, state.dashboardStats.todoCount - 1),
       },
+    }));
+    get().showToast('success', '待办事项已完成');
+  },
+
+  /**
+   * 执行监管报送
+   * @param submissionId 报送事项ID
+   */
+  submitRegulatory: (submissionId: string) => {
+    set((state) => ({
+      regulatorySubmissions: state.regulatorySubmissions.map((sub) =>
+        sub.id === submissionId
+          ? { ...sub, status: 'submitted' as const, submittedDate: new Date().toISOString().split('T')[0] }
+          : sub
+      ),
+    }));
+    get().showToast('success', '监管报送提交成功');
+  },
+
+  /**
+   * 标记通知已读
+   * @param notificationId 通知ID
+   */
+  markNotificationRead: (notificationId: string) => {
+    set((state) => ({
+      systemNotifications: state.systemNotifications.map((notif) =>
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      ),
+    }));
+  },
+
+  /**
+   * 标记所有通知已读
+   */
+  markAllNotificationsRead: () => {
+    set((state) => ({
+      systemNotifications: state.systemNotifications.map((notif) => ({ ...notif, read: true })),
+    }));
+    get().showToast('info', '所有通知已标记为已读');
+  },
+
+  /**
+   * 打开弹窗
+   * @param modal 弹窗类型
+   * @param data 附加数据（如报告ID）
+   */
+  openModal: (modal: ModalType, data?: string) => {
+    set({ activeModal: modal, previewReportId: data || null });
+  },
+
+  /**
+   * 关闭弹窗
+   */
+  closeModal: () => {
+    set({ activeModal: 'none', previewReportId: null });
+  },
+
+  /**
+   * 添加Toast提示
+   * @param type 类型
+   * @param message 消息
+   */
+  showToast: (type: ToastType, message: string) => {
+    const toastId = generateId('toast');
+    set((state) => ({
+      toasts: [...state.toasts, { id: toastId, type, message }],
+    }));
+    setTimeout(() => {
+      get().removeToast(toastId);
+    }, 3000);
+  },
+
+  /**
+   * 移除Toast提示
+   * @param toastId Toast ID
+   */
+  removeToast: (toastId: string) => {
+    set((state) => ({
+      toasts: state.toasts.filter((t) => t.id !== toastId),
     }));
   },
 

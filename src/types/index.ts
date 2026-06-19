@@ -361,3 +361,67 @@ export interface DashboardStats {
   /** 待办事项数 */
   todoCount: number;
 }
+
+/**
+ * 违约处置进展步骤接口
+ */
+export interface DefaultProgressStep {
+  /** 步骤名称 */
+  step: string;
+  /** 日期 */
+  date: string;
+  /** 状态 */
+  status: 'completed' | 'processing' | 'pending';
+  /** 描述 */
+  desc: string;
+}
+
+/**
+ * 可生成报告模板接口
+ */
+export interface ReportTemplate {
+  /** 报告ID */
+  id: string;
+  /** 报告标题 */
+  title: string;
+  /** 报告描述 */
+  description: string;
+  /** 图标名称 */
+  iconType: 'filecheck' | 'chart' | 'filetext' | 'warning';
+}
+
+/**
+ * 监管报送事项接口
+ */
+export interface RegulatorySubmission {
+  /** 报送事项ID */
+  id: string;
+  /** 关联债券ID */
+  bondId: string;
+  /** 报送事项名称 */
+  item: string;
+  /** 报送截止日 */
+  deadline: string;
+  /** 报送日期 */
+  submittedDate?: string;
+  /** 报送状态 */
+  status: 'submitted' | 'pending';
+}
+
+/**
+ * 系统通知消息接口
+ */
+export interface SystemNotification {
+  /** 消息ID */
+  id: string;
+  /** 消息标题 */
+  title: string;
+  /** 消息内容 */
+  content: string;
+  /** 时间 */
+  time: string;
+  /** 级别 */
+  level: 'high' | 'medium' | 'low';
+  /** 是否已读 */
+  read: boolean;
+}

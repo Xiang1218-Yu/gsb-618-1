@@ -15,45 +15,16 @@ import { useAppStore } from '@/store';
 import { formatDate } from '@/utils/formatters';
 
 /**
- * 监管报送事项接口
- */
-interface RegulatorySubmission {
-  /** 报送事项ID */
-  id: string;
-  /** 报送事项名称 */
-  item: string;
-  /** 债券名称 */
-  bondName: string;
-  /** 报送截止日 */
-  deadline: string;
-  /** 报送状态 */
-  status: 'submitted' | 'pending';
-}
-
-/**
- * 可生成报告接口
- */
-interface ReportItem {
-  /** 报告ID */
-  id: string;
-  /** 报告标题 */
-  title: string;
-  /** 报告描述 */
-  description: string;
-  /** 报告图标 */
-  icon: typeof FileText;
-  /** 图标颜色 */
-  iconColor: string;
-  /** 图标背景色 */
-  iconBg: string;
-}
-
-/**
  * 合规报告中心页面
  */
 const Reports = () => {
   const bonds = useAppStore((state) => state.bonds);
   const complianceChecks = useAppStore((state) => state.complianceChecks);
+  const reportTemplates = useAppStore((state) => state.reportTemplates);
+  const regulatorySubmissions = useAppStore((state) => state.regulatorySubmissions);
+  const submitRegulatory = useAppStore((state) => state.submitRegulatory);
+  const openModal = useAppStore((state) => state.openModal);
+  const showToast = useAppStore((state) => state.showToast);
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
 
   /**
@@ -64,6 +35,21 @@ const Reports = () => {
   const getBondNameById = (bondId: string): string => {
     const bond = bonds.find((b) => b.id === bondId);
     return bond?.bondName || '-';
+  };
+
+  /**
+   * 根据iconType获取报告图标配置
+   * @param iconType 图标类型
+   * @returns 图标组件、颜色、背景色配置
+   */
+  const getReportIconConfig = (iconType: string) => {
+    const iconMap: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
+      filecheck: { icon: FileCheck, color: 'text-primary-600', bg: 'bg-primary-50' },
+      chart: { icon: FileBarChart, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+      filetext: { icon: FileText, color: 'text-gold-600', bg: 'bg-gold-50' },
+      warning: { icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50' },
+    };
+    return iconMap[iconType] || { icon: FileText, color: 'text-slate-600', bg: 'bg-slate-50' };
   };
 
   /**
@@ -123,92 +109,6 @@ const Reports = () => {
   ];
 
   /**
-   * 可生成报告列表
-   */
-  const reportList: ReportItem[] = [
-    {
-      id: 'report-001',
-      title: '存续期合规定期报告',
-      description: '按月/季度生成债券存续期合规检查情况汇总报告，包含资金使用、信息披露、财务指标等合规要点',
-      icon: FileCheck,
-      iconColor: 'text-primary-600',
-      iconBg: 'bg-primary-50',
-    },
-    {
-      id: 'report-002',
-      title: '年度风险管理报告',
-      description: '年度全面风险管理报告，涵盖信用风险、市场风险、流动性风险等各类风险识别、评估与应对措施',
-      icon: FileBarChart,
-      iconColor: 'text-emerald-600',
-      iconBg: 'bg-emerald-50',
-    },
-    {
-      id: 'report-003',
-      title: '募集资金使用专项报告',
-      description: '针对募集资金到账、使用、专户管理等情况的专项核查报告，确保资金用途与募集说明书约定一致',
-      icon: FileText,
-      iconColor: 'text-gold-600',
-      iconBg: 'bg-gold-50',
-    },
-    {
-      id: 'report-004',
-      title: '风险排查报告',
-      description: '定期或专项风险排查工作报告，包含风险事项清单、成因分析、整改措施及跟踪落实情况',
-      icon: AlertTriangle,
-      iconColor: 'text-orange-600',
-      iconBg: 'bg-orange-50',
-    },
-  ];
-
-  /**
-   * 监管报送跟踪数据
-   */
-  const regulatorySubmissions: RegulatorySubmission[] = [
-    {
-      id: 'sub-001',
-      item: '2024年一季度受托管理事务报告',
-      bondName: '23华信01',
-      deadline: '2024-06-30',
-      status: 'pending',
-    },
-    {
-      id: 'sub-002',
-      item: '2023年年度受托管理事务报告',
-      bondName: '23盛世02',
-      deadline: '2024-06-30',
-      status: 'pending',
-    },
-    {
-      id: 'sub-003',
-      item: '募集资金存放与使用情况专项报告',
-      bondName: '24天合MTN001',
-      deadline: '2024-07-15',
-      status: 'pending',
-    },
-    {
-      id: 'sub-004',
-      item: '2024年一季度受托管理事务报告',
-      bondName: '24中鼎CP001',
-      deadline: '2024-05-15',
-      status: 'submitted',
-    },
-    {
-      id: 'sub-005',
-      item: '临时受托管理事务报告（违约事项）',
-      bondName: '22盛世01',
-      deadline: '2024-05-15',
-      status: 'submitted',
-    },
-    {
-      id: 'sub-006',
-      item: '2023年年度受托管理事务报告',
-      bondName: '23华信01',
-      deadline: '2024-04-30',
-      status: 'submitted',
-    },
-  ];
-
-  /**
    * 获取整改状态文本
    * @param status 整改状态
    * @returns 中文文本
@@ -258,13 +158,37 @@ const Reports = () => {
 
   /**
    * 处理生成报告
-   * @param reportId 报告ID
+   * @param report 报告模板
    */
-  const handleGenerateReport = (reportId: string) => {
-    setGeneratingReportId(reportId);
+  const handleGenerateReport = (report: typeof reportTemplates[0]) => {
+    setGeneratingReportId(report.id);
     setTimeout(() => {
       setGeneratingReportId(null);
+      showToast('success', `${report.title}生成完成，可点击预览查看`);
     }, 1500);
+  };
+
+  /**
+   * 处理预览报告
+   * @param reportId 报告ID
+   */
+  const handlePreviewReport = (reportId: string) => {
+    openModal('previewReport', reportId);
+  };
+
+  /**
+   * 处理监管报送
+   * @param submissionId 报送事项ID
+   */
+  const handleSubmitRegulatory = (submissionId: string) => {
+    submitRegulatory(submissionId);
+  };
+
+  /**
+   * 处理查看报送记录
+   */
+  const handleViewSubmission = () => {
+    showToast('info', '正在打开报送记录详情...');
   };
 
   return (
@@ -385,8 +309,9 @@ const Reports = () => {
           <h3 className="text-lg font-semibold text-slate-800 font-serif">报告生成</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {reportList.map((report) => {
-            const Icon = report.icon;
+          {reportTemplates.map((report) => {
+            const iconConfig = getReportIconConfig(report.iconType);
+            const Icon = iconConfig.icon;
             const isGenerating = generatingReportId === report.id;
             return (
               <div
@@ -394,15 +319,15 @@ const Reports = () => {
                 className="border border-slate-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${report.iconBg} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                    <Icon className={`w-6 h-6 ${report.iconColor}`} />
+                  <div className={`w-12 h-12 rounded-xl ${iconConfig.bg} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                    <Icon className={`w-6 h-6 ${iconConfig.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-base font-semibold text-slate-800 mb-1">{report.title}</h4>
                     <p className="text-sm text-slate-500 mb-3 line-clamp-2">{report.description}</p>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleGenerateReport(report.id)}
+                        onClick={() => handleGenerateReport(report)}
                         disabled={isGenerating}
                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-700 hover:bg-primary-800 disabled:bg-primary-400 text-white text-sm font-medium rounded-lg transition-colors"
                       >
@@ -421,7 +346,10 @@ const Reports = () => {
                           </>
                         )}
                       </button>
-                      <button className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:border-primary-300 text-slate-600 hover:text-primary-700 text-sm font-medium rounded-lg transition-colors">
+                      <button
+                        onClick={() => handlePreviewReport(report.id)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:border-primary-300 text-slate-600 hover:text-primary-700 text-sm font-medium rounded-lg transition-colors"
+                      >
                         <Eye className="w-4 h-4" />
                         预览
                       </button>
@@ -460,7 +388,7 @@ const Reports = () => {
                     <span className="text-sm text-slate-800 font-medium">{submission.item}</span>
                   </td>
                   <td className="table-cell px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-600">{submission.bondName}</span>
+                    <span className="text-sm text-slate-600">{bonds.find(b => b.id === submission.bondId)?.bondName || '-'}</span>
                   </td>
                   <td className="table-cell px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-slate-500">{formatDate(submission.deadline)}</span>
@@ -478,17 +406,26 @@ const Reports = () => {
                   <td className="table-cell px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {submission.status === 'submitted' ? (
-                        <button className="inline-flex items-center gap-1 text-sm text-primary-700 hover:text-primary-800 font-medium">
+                        <button
+                          onClick={handleViewSubmission}
+                          className="inline-flex items-center gap-1 text-sm text-primary-700 hover:text-primary-800 font-medium"
+                        >
                           <Eye className="w-4 h-4" />
                           查看
                         </button>
                       ) : (
                         <>
-                          <button className="inline-flex items-center gap-1 text-sm text-primary-700 hover:text-primary-800 font-medium">
+                          <button
+                            onClick={() => handleSubmitRegulatory(submission.id)}
+                            className="inline-flex items-center gap-1 text-sm text-primary-700 hover:text-primary-800 font-medium"
+                          >
                             <Send className="w-4 h-4" />
                             报送
                           </button>
-                          <button className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
+                          <button
+                            onClick={() => handlePreviewReport('report-001')}
+                            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+                          >
                             <Eye className="w-4 h-4" />
                             预览
                           </button>

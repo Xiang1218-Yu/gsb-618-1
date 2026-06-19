@@ -63,6 +63,7 @@ const Duration = () => {
   const payments = useAppStore((state) => state.payments);
   const disclosures = useAppStore((state) => state.disclosures);
   const bonds = useAppStore((state) => state.bonds);
+  const defaultProgressSteps = useAppStore((state) => state.defaultProgressSteps);
 
   /**
    * 根据债券ID获取债券名称
@@ -187,17 +188,6 @@ const Duration = () => {
   const defaultPayments = useMemo(() => {
     return payments.filter((p) => p.bondId === 'bond-008' && p.status === 'overdue');
   }, [payments]);
-
-  /**
-   * 违约处置进展步骤
-   */
-  const defaultProgress = [
-    { step: '违约认定', date: '2024-05-11', status: 'completed', desc: '发行人未能按期兑付2024年5月10日应付利息，构成实质违约' },
-    { step: '风险预警', date: '2024-05-11', status: 'completed', desc: '受托管理人发布风险预警公告，通知全体债券持有人' },
-    { step: '持有人会议', date: '2024-05-25', status: 'completed', desc: '召开债券持有人会议，审议通过违约处置议案' },
-    { step: '追偿方案', date: '2024-06-10', status: 'processing', desc: '正在与发行人协商制定偿债方案，推进资产处置' },
-    { step: '司法程序', date: '', status: 'pending', desc: '视协商进展启动司法追偿程序' },
-  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -448,7 +438,7 @@ const Duration = () => {
               <div className="relative">
                 <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-200"></div>
                 <div className="space-y-6">
-                  {defaultProgress.map((step, index) => {
+                  {defaultProgressSteps.map((step, index) => {
                     return (
                       <div key={index} className="flex gap-4 relative">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${

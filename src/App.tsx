@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import ToastContainer from '@/components/common/ToastContainer';
+import GlobalModal from '@/components/common/GlobalModal';
 import Dashboard from '@/pages/Dashboard';
 import BondList from '@/pages/BondList';
 import BondDetail from '@/pages/BondDetail';
@@ -24,6 +26,8 @@ const MainLayout = () => {
           <Outlet />
         </main>
       </div>
+      <ToastContainer />
+      <GlobalModal />
     </div>
   );
 };

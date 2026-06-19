@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, User, ChevronDown, Menu, X, FileText, Building2, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Bell, Search, User, ChevronDown, Menu, X, FileText, Building2, AlertTriangle, CheckSquare, CheckCheck } from 'lucide-react';
 import { useAppStore } from '@/store';
 import type { SearchResultItem } from '@/store';
 
@@ -38,6 +38,15 @@ const resultTypeLabels: Record<SearchResultItem['type'], string> = {
 };
 
 /**
+ * 通知级别样式映射
+ */
+const notificationLevelStyles: Record<string, { border: string; icon: React.ReactNode; textColor: string }> = {
+  high: { border: 'border-l-risk-high', icon: <AlertTriangle className="w-4 h-4 text-risk-high" />, textColor: 'text-red-600' },
+  medium: { border: 'border-l-risk-medium', icon: <AlertTriangle className="w-4 h-4 text-risk-medium" />, textColor: 'text-amber-600' },
+  low: { border: 'border-l-primary-500', icon: <Bell className="w-4 h-4 text-primary-600" />, textColor: 'text-primary-600' },
+};
+
+/**
  * 顶部导航Header组件
  */
 const Header = () => {
@@ -49,10 +58,16 @@ const Header = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const highRiskCount = useAppStore((state) => state.dashboardStats.highRiskCount);
+  const systemNotifications = useAppStore((state) => state.systemNotifications);
+  const unreadCount = systemNotifications.filter((n) => !n.read).length;
   const todoCount = useAppStore((state) => state.dashboardStats.todoCount);
   const globalSearch = useAppStore((state) => state.globalSearch);
+  const markNotificationRead = useAppStore((state) => state.markNotificationRead);
+  const markAllNotificationsRead = useAppStore((state) => state.markAllNotificationsRead);
+  const openModal = useAppStore((state) => state.openModal);
 
   /** 实时搜索结果 */
   const searchResults = searchKeyword.trim() ? globalSearch(searchKeyword) : [];
@@ -70,7 +85,7 @@ const Header = () => {
    */
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(Boolean);
-    return [{ label: '首页', path: '/' }, ...paths.map((p) => ({ label: pageTitles['/' + p] || p, path: '/' + p }))];
+    return [{ label: '首页', path: '/' }, ...paths.map((p) => ({ label: pageTitles['/' + p] || '债券详情', path: '/' + p }))];
   };
 
   /**
@@ -93,11 +108,17 @@ const Header = () => {
     }
   };
 
-  /** 点击外部关闭搜索结果 */
+  /** 点击外部关闭下拉菜单 */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchResults(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -218,7 +239,7 @@ const Header = () => {
           </div>
 
           {/* 通知 */}
-          <div className="relative">
+          <div className="relative" ref={notificationRef}>
             <button
               className="p-2 rounded-lg hover:bg-slate-100 relative transition-colors"
               onClick={() => {
@@ -227,29 +248,51 @@ const Header = () => {
               }}
             >
               <Bell className="w-5 h-5 text-slate-600" />
-              {highRiskCount > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-risk-high rounded-full text-white text-xs flex items-center justify-center font-medium animate-blink">
-                  {highRiskCount}
+                  {unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifications && (
               <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in z-40">
-                <div className="p-3 border-b border-slate-100">
+                <div className="p-3 border-b border-slate-100 flex items-center justify-between">
                   <h3 className="font-semibold text-slate-800">消息通知</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllNotificationsRead}
+                      className="text-xs text-primary-700 hover:text-primary-800 flex items-center gap-1"
+                    >
+                      <CheckCheck className="w-3 h-3" />全部已读
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-80 overflow-y-auto scrollbar-thin">
-                  <div className="p-3 hover:bg-red-50 border-l-4 border-risk-high cursor-pointer">
-                    <p className="text-sm font-medium text-slate-800">高风险预警</p>
-                    <p className="text-xs text-slate-500 mt-1">盛世地产相关债券出现{highRiskCount}项高风险预警</p>
-                    <p className="text-xs text-slate-400 mt-1">2024-06-19 09:30</p>
-                  </div>
-                  <div className="p-3 hover:bg-amber-50 border-l-4 border-risk-medium cursor-pointer">
-                    <p className="text-sm font-medium text-slate-800">待办提醒</p>
-                    <p className="text-xs text-slate-500 mt-1">您有{todoCount}项待办事项待处理</p>
-                    <p className="text-xs text-slate-400 mt-1">2024-06-19 08:00</p>
-                  </div>
+                  {systemNotifications.map((notif) => {
+                    const style = notificationLevelStyles[notif.level] || notificationLevelStyles.low;
+                    return (
+                      <div
+                        key={notif.id}
+                        onClick={() => markNotificationRead(notif.id)}
+                        className={`p-3 hover:bg-slate-50 border-l-4 cursor-pointer transition-colors ${style.border} ${!notif.read ? 'bg-slate-50/50' : ''}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="mt-0.5 flex-shrink-0">{style.icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`text-sm font-medium ${notif.read ? 'text-slate-500' : 'text-slate-800'}`}>
+                                {notif.title}
+                              </p>
+                              {!notif.read && <span className="w-2 h-2 rounded-full bg-risk-high flex-shrink-0"></span>}
+                            </div>
+                            <p className={`text-xs mt-1 ${notif.read ? 'text-slate-400' : 'text-slate-500'}`}>{notif.content}</p>
+                            <p className="text-xs text-slate-400 mt-1">{notif.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="p-3 border-t border-slate-100 text-center">
                   <button className="text-sm text-primary-700 hover:text-primary-800 font-medium">查看全部消息</button>
@@ -259,7 +302,7 @@ const Header = () => {
           </div>
 
           {/* 用户信息 */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
               onClick={() => {
@@ -280,8 +323,27 @@ const Header = () => {
             {showUserMenu && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden animate-fade-in z-40">
                 <div className="p-2">
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50">个人设置</button>
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50">修改密码</button>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      openModal('profileSettings');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4 text-slate-500" />个人设置
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      openModal('changePassword');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    修改密码
+                  </button>
                   <div className="border-t border-slate-100 my-1"></div>
                   <button className="w-full text-left px-3 py-2 rounded-lg text-sm text-risk-high hover:bg-red-50">退出登录</button>
                 </div>

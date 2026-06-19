@@ -16,6 +16,10 @@ import {
   RiskAlert,
   TodoItem,
   DashboardStats,
+  DefaultProgressStep,
+  ReportTemplate,
+  RegulatorySubmission,
+  SystemNotification,
 } from '@/types';
 
 /**
@@ -1065,4 +1069,126 @@ export const debtRatioTrend = [
   { period: '2023Q3', 华信能源: 63.1, 盛世地产: 76.8, 天合交通: 57.5 },
   { period: '2023Q4', 华信能源: 62.9, 盛世地产: 78.1, 天合交通: 57.8 },
   { period: '2024Q1', 华信能源: 62.5, 盛世地产: 78.6, 天合交通: 58.2 },
+];
+
+/**
+ * 违约处置进展步骤Mock数据（22盛世01违约跟踪）
+ */
+export const mockDefaultProgressSteps: DefaultProgressStep[] = [
+  { step: '违约认定', date: '2024-05-11', status: 'completed', desc: '发行人未能按期兑付2024年5月10日应付利息，构成实质违约' },
+  { step: '风险预警', date: '2024-05-11', status: 'completed', desc: '受托管理人发布风险预警公告，通知全体债券持有人' },
+  { step: '持有人会议', date: '2024-05-25', status: 'completed', desc: '召开债券持有人会议，审议通过违约处置议案' },
+  { step: '追偿方案', date: '2024-06-10', status: 'processing', desc: '正在与发行人协商制定偿债方案，推进资产处置' },
+  { step: '司法程序', date: '', status: 'pending', desc: '视协商进展启动司法追偿程序' },
+];
+
+/**
+ * 可生成报告模板Mock数据
+ */
+export const mockReportTemplates: ReportTemplate[] = [
+  {
+    id: 'report-001',
+    title: '存续期合规定期报告',
+    description: '按月/季度生成债券存续期合规检查情况汇总报告，包含资金使用、信息披露、财务指标等合规要点',
+    iconType: 'filecheck',
+  },
+  {
+    id: 'report-002',
+    title: '年度风险管理报告',
+    description: '年度全面风险管理报告，涵盖信用风险、市场风险、流动性风险等各类风险识别、评估与应对措施',
+    iconType: 'chart',
+  },
+  {
+    id: 'report-003',
+    title: '募集资金使用专项报告',
+    description: '针对募集资金到账、使用、专户管理等情况的专项核查报告，确保资金用途与募集说明书约定一致',
+    iconType: 'filetext',
+  },
+  {
+    id: 'report-004',
+    title: '风险排查报告',
+    description: '定期或专项风险排查工作报告，包含风险事项清单、成因分析、整改措施及跟踪落实情况',
+    iconType: 'warning',
+  },
+];
+
+/**
+ * 监管报送Mock数据
+ */
+export const mockRegulatorySubmissions: RegulatorySubmission[] = [
+  {
+    id: 'sub-001',
+    bondId: 'bond-001',
+    item: '2024年一季度受托管理事务报告',
+    deadline: '2024-06-30',
+    status: 'pending',
+  },
+  {
+    id: 'sub-002',
+    bondId: 'bond-002',
+    item: '2023年年度受托管理事务报告',
+    deadline: '2024-06-30',
+    status: 'pending',
+  },
+  {
+    id: 'sub-003',
+    bondId: 'bond-003',
+    item: '募集资金存放与使用情况专项报告',
+    deadline: '2024-07-15',
+    status: 'pending',
+  },
+  {
+    id: 'sub-004',
+    bondId: 'bond-004',
+    item: '2024年一季度受托管理事务报告',
+    deadline: '2024-05-15',
+    submittedDate: '2024-05-14',
+    status: 'submitted',
+  },
+  {
+    id: 'sub-005',
+    bondId: 'bond-008',
+    item: '临时受托管理事务报告（违约事项）',
+    deadline: '2024-05-15',
+    submittedDate: '2024-05-12',
+    status: 'submitted',
+  },
+  {
+    id: 'sub-006',
+    bondId: 'bond-001',
+    item: '2023年年度受托管理事务报告',
+    deadline: '2024-04-30',
+    submittedDate: '2024-04-28',
+    status: 'submitted',
+  },
+];
+
+/**
+ * 系统通知Mock数据
+ */
+export const mockSystemNotifications: SystemNotification[] = [
+  {
+    id: 'notif-001',
+    title: '高风险预警',
+    content: '盛世地产相关债券出现3项高风险预警，请及时关注处理',
+    time: '2024-06-19 09:30',
+    level: 'high',
+    read: false,
+  },
+  {
+    id: 'notif-002',
+    title: '待办提醒',
+    content: '您有5项待办事项待处理，其中2项即将到期',
+    time: '2024-06-19 08:00',
+    level: 'medium',
+    read: false,
+  },
+  {
+    id: 'notif-003',
+    title: '披露到期提醒',
+    content: '23盛世02临时公告将于2024-06-18到期，请及时完成披露',
+    time: '2024-06-18 10:00',
+    level: 'medium',
+    read: true,
+  },
 ];
