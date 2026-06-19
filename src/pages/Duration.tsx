@@ -22,23 +22,30 @@ import type { DurationBond, InterestPayment, DisclosureRecord } from '@/types/bo
 
 // 存续期管理页面
 const Duration: React.FC = () => {
+  // 当前激活的标签页：存续债券/付息兑付/信息披露
   const [activeTab, setActiveTab] = useState<'bonds' | 'interest' | 'disclosure'>('bonds');
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 付息状态映射
+  /**
+   * 付息状态映射配置
+   * 定义利息支付的各种状态
+   */
   const paymentStatusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    pending: { label: '待支付', color: 'warning' },
-    paid: { label: '已支付', color: 'success' },
-    overdue: { label: '逾期', color: 'danger' }
+    pending: { label: '待支付', color: 'warning' },  // 即将支付但尚未支付
+    paid: { label: '已支付', color: 'success' },     // 已完成支付
+    overdue: { label: '逾期', color: 'danger' }       // 超过期限未支付
   };
 
-  // 披露类型映射
+  /**
+   * 披露类型映射配置
+   * 定义信息披露文件的分类
+   */
   const disclosureTypeMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    periodic: { label: '定期报告', color: 'info' },
-    temporary: { label: '临时公告', color: 'warning' },
-    other: { label: '其他文件', color: 'default' }
+    periodic: { label: '定期报告', color: 'info' },   // 年度/半年度/季度报告
+    temporary: { label: '临时公告', color: 'warning' }, // 重大事项临时公告
+    other: { label: '其他文件', color: 'default' }     // 其他披露文件
   };
 
   // 统计数据
@@ -52,8 +59,12 @@ const Duration: React.FC = () => {
     )
   };
 
-  // 债券表格列配置
+  /**
+   * 债券表格列配置
+   * 存续债券列表的列定义
+   */
   const bondColumns: Column<DurationBond>[] = [
+    // 债券名称列：显示债券名称和债券代码
     {
       key: 'bondName',
       title: '债券名称',
@@ -65,12 +76,14 @@ const Duration: React.FC = () => {
         </div>
       )
     },
+    // 发行人列：显示发行主体名称
     {
       key: 'issuerName',
       title: '发行人',
       width: '200px',
       render: (record) => <span className="text-sm text-gray-700">{record.issuerName}</span>
     },
+    // 发行规模列：显示发行总额（单位：亿元）
     {
       key: 'issueAmount',
       title: '发行规模(亿)',
@@ -78,6 +91,7 @@ const Duration: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-gray-900">{record.issueAmount}</span>
     },
+    // 票面利率列：显示债券年利率，橙色高亮
     {
       key: 'issueRate',
       title: '票面利率',
@@ -85,12 +99,14 @@ const Duration: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm text-[#d97706] font-medium">{record.issueRate}%</span>
     },
+    // 到期日列：显示债券到期兑付日期
     {
       key: 'maturityDate',
       title: '到期日',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.maturityDate}</span>
     },
+    // 下一付息日列：显示下一次付息日期和剩余天数
     {
       key: 'nextInterestDate',
       title: '下一付息日',
@@ -102,6 +118,7 @@ const Duration: React.FC = () => {
         </div>
       )
     },
+    // 付息进度列：进度条显示已付息次数/总付息次数
     {
       key: 'interestProgress',
       title: '付息进度',
@@ -120,6 +137,7 @@ const Duration: React.FC = () => {
         </div>
       )
     },
+    // 操作列：查看详情按钮
     {
       key: 'actions',
       title: '操作',
@@ -135,26 +153,33 @@ const Duration: React.FC = () => {
     }
   ];
 
-  // 付息记录表格列配置
+  /**
+   * 付息记录表格列配置
+   * 利息支付记录列表的列定义
+   */
   const paymentColumns: Column<InterestPayment>[] = [
+    // 债券名称列：显示关联的债券名称
     {
       key: 'bondName',
       title: '债券名称',
       width: '180px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
+    // 类型列：固定显示"付息"标签
     {
       key: 'paymentType',
       title: '类型',
       width: '80px',
       render: () => <Badge variant="info">付息</Badge>
     },
+    // 付息日列：显示利息支付日期
     {
       key: 'paymentDate',
       title: '付息日',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.paymentDate}</span>
     },
+    // 付息金额列：显示本次付息总金额（万元）
     {
       key: 'paymentAmount',
       title: '付息金额(万)',
@@ -162,6 +187,7 @@ const Duration: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-gray-900">{record.paymentAmount.toLocaleString()}</span>
     },
+    // 状态列：显示付息状态（待支付/已支付/逾期）
     {
       key: 'status',
       title: '状态',
@@ -172,6 +198,7 @@ const Duration: React.FC = () => {
         </Badge>
       )
     },
+    // 备注列：显示支付相关备注信息
     {
       key: 'remark',
       title: '备注',
@@ -179,8 +206,12 @@ const Duration: React.FC = () => {
     }
   ];
 
-  // 信息披露表格列配置
+  /**
+   * 信息披露表格列配置
+   * 披露文件列表的列定义
+   */
   const disclosureColumns: Column<DisclosureRecord>[] = [
+    // 债券名称列：关联查询显示所属债券名称
     {
       key: 'bondName',
       title: '债券名称',
@@ -190,11 +221,13 @@ const Duration: React.FC = () => {
         return <span className="font-medium text-gray-900">{bond?.bondName || '-'}</span>;
       }
     },
+    // 公告标题列：可点击查看详情
     {
       key: 'title',
       title: '公告标题',
       render: (record) => <span className="text-sm text-gray-700 hover:text-[#1e3a8a] cursor-pointer">{record.title}</span>
     },
+    // 类型列：显示披露文件类型
     {
       key: 'type',
       title: '类型',
@@ -205,6 +238,7 @@ const Duration: React.FC = () => {
         </Badge>
       )
     },
+    // 披露日期列：显示公告发布日期
     {
       key: 'publishDate',
       title: '披露日期',
@@ -213,21 +247,31 @@ const Duration: React.FC = () => {
     }
   ];
 
-  // 获取当前表格数据
+  /**
+   * 获取当前表格数据
+   * 根据激活的标签页返回对应的数据，并应用搜索过滤
+   * 过滤逻辑：各标签页分别搜索对应的字段
+   */
   const getTableData = () => {
     switch (activeTab) {
       case 'bonds':
+        // 存续债券页：按债券名称模糊搜索
         return mockDurationBonds.filter(b => b.bondName.includes(searchText));
       case 'interest':
+        // 付息兑付页：按债券名称模糊搜索
         return mockInterestPayments.filter(p => p.bondName.includes(searchText));
       case 'disclosure':
+        // 信息披露页：按公告标题模糊搜索
         return mockDisclosureRecords.filter(d => d.title.includes(searchText));
       default:
         return [];
     }
   };
 
-  // 获取当前表格列配置
+  /**
+   * 获取当前表格列配置
+   * 根据激活的标签页返回对应的列配置数组
+   */
   const getColumns = () => {
     switch (activeTab) {
       case 'bonds':
@@ -241,7 +285,11 @@ const Duration: React.FC = () => {
     }
   };
 
-  // 标签页配置
+  /**
+   * 标签页配置数组
+   * 定义三个标签页的key、显示名称和数据数量
+   * Tab切换逻辑：点击标签时更新activeTab状态并重置页码到第1页
+   */
   const tabs = [
     { key: 'bonds', label: '存续债券', count: mockDurationBonds.length },
     { key: 'interest', label: '付息兑付', count: mockInterestPayments.length },
@@ -287,7 +335,7 @@ const Duration: React.FC = () => {
         />
       </div>
 
-      {/* 标签页切换 */}
+      {/* 标签页切换区域 */}
       <Card bodyClassName="p-0">
         <div className="border-b border-gray-200">
           <div className="flex">
@@ -295,6 +343,7 @@ const Duration: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => {
+                  // 切换标签时重置到第一页
                   setActiveTab(tab.key as typeof activeTab);
                   setCurrentPage(1);
                 }}

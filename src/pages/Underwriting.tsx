@@ -27,18 +27,32 @@ const Underwriting: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 项目状态映射
+  /**
+   * 项目状态映射配置
+   * 用于将后端状态码转换为前端显示的标签和样式颜色
+   * key: 状态编码
+   * label: 中文显示名称
+   * color: Badge组件使用的颜色变体
+   */
   const statusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    in_progress: { label: '进行中', color: 'info' },
-    submitted: { label: '已申报', color: 'warning' },
-    approved: { label: '已获批', color: 'success' },
-    rejected: { label: '已驳回', color: 'danger' }
+    in_progress: { label: '进行中', color: 'info' },    // 项目正在进行中
+    submitted: { label: '已申报', color: 'warning' },   // 已提交申报材料
+    approved: { label: '已获批', color: 'success' },    // 审批通过
+    rejected: { label: '已驳回', color: 'danger' }      // 审批驳回
   };
 
-  // 过滤数据
+  /**
+   * 数据过滤函数
+   * 过滤逻辑：
+   * 1. 搜索文本过滤：匹配债券名称或项目名称（模糊匹配）
+   * 2. 状态过滤：选择"全部"时不过滤，否则匹配指定状态
+   * 两个条件需同时满足（逻辑与）
+   */
   const filteredData = mockUnderwritingProjects.filter(project => {
+    // 搜索条件：债券名称或项目名称包含搜索文本
     const matchSearch = project.bondName.includes(searchText) || 
                        project.projectName.includes(searchText);
+    // 状态条件：状态筛选为全部或匹配当前状态
     const matchStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -51,8 +65,12 @@ const Underwriting: React.FC = () => {
     approved: mockUnderwritingProjects.filter(p => p.status === 'approved').length
   };
 
-  // 表格列配置
+  /**
+   * 表格列配置数组
+   * 定义承销项目列表的每一列显示内容、宽度和渲染方式
+   */
   const columns: Column<UnderwritingProject>[] = [
+    // 债券名称列：显示债券名称和项目名称两行
     {
       key: 'bondName',
       title: '债券名称',
@@ -64,6 +82,7 @@ const Underwriting: React.FC = () => {
         </div>
       )
     },
+    // 项目状态列：使用Badge组件显示状态标签
     {
       key: 'status',
       title: '项目状态',
@@ -74,6 +93,7 @@ const Underwriting: React.FC = () => {
         </Badge>
       )
     },
+    // 当前阶段列：显示项目所处的工作阶段
     {
       key: 'currentStage',
       title: '当前阶段',
@@ -82,6 +102,7 @@ const Underwriting: React.FC = () => {
         <span className="text-sm text-gray-700">{record.currentStage}</span>
       )
     },
+    // 项目进度列：使用进度条显示完成百分比
     {
       key: 'progress',
       title: '项目进度',
@@ -100,18 +121,21 @@ const Underwriting: React.FC = () => {
         </div>
       )
     },
+    // 开始日期列：显示项目启动日期
     {
       key: 'startDate',
       title: '开始日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.startDate}</span>
     },
+    // 预计申报日期列：显示计划提交申报的日期
     {
       key: 'expectedSubmitDate',
       title: '预计申报日期',
       width: '120px',
       render: (record) => <span className="text-sm text-gray-600">{record.expectedSubmitDate}</span>
     },
+    // 项目成员列：显示团队成员数量
     {
       key: 'teamMembers',
       title: '项目成员',
@@ -123,6 +147,7 @@ const Underwriting: React.FC = () => {
         </div>
       )
     },
+    // 操作列：查看详情按钮
     {
       key: 'actions',
       title: '操作',
@@ -155,7 +180,10 @@ const Underwriting: React.FC = () => {
           { title: '债券承销', href: '/underwriting' }
         ]}
         extra={
-          <Button variant="primary">
+          <Button 
+            variant="primary"
+            onClick={() => alert('新增承销项目功能开发中...')}
+          >
             <Plus className="w-4 h-4 mr-1" />
             新建项目
           </Button>

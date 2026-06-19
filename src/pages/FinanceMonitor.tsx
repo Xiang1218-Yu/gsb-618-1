@@ -21,18 +21,26 @@ import type { FinancialIndicator, FinanceWarning } from '@/types/finance';
 
 // 财务监控中心页面
 const FinanceMonitor: React.FC = () => {
+  // 当前激活标签页：财务指标监控/财务预警记录
   const [activeTab, setActiveTab] = useState<'indicators' | 'warnings'>('indicators');
   const [searchText, setSearchText] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 预警等级映射
+  /**
+   * 预警等级映射配置
+   * 定义财务指标的四级预警等级
+   * key: 等级编码
+   * label: 中文显示名称
+   * color: Badge组件颜色
+   * bgColor: 背景色（用于卡片高亮）
+   */
   const levelMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default'; bgColor: string }> = {
-    normal: { label: '正常', color: 'success', bgColor: 'bg-green-50' },
-    attention: { label: '关注', color: 'info', bgColor: 'bg-blue-50' },
-    warning: { label: '预警', color: 'warning', bgColor: 'bg-amber-50' },
-    danger: { label: '危险', color: 'danger', bgColor: 'bg-red-50' }
+    normal: { label: '正常', color: 'success', bgColor: 'bg-green-50' },    // 指标健康
+    attention: { label: '关注', color: 'info', bgColor: 'bg-blue-50' },      // 需要关注
+    warning: { label: '预警', color: 'warning', bgColor: 'bg-amber-50' },    // 发出预警
+    danger: { label: '危险', color: 'danger', bgColor: 'bg-red-50' }         // 危险状态
   };
 
   // 统计数据
@@ -45,8 +53,12 @@ const FinanceMonitor: React.FC = () => {
     unhandledWarnings: mockFinanceWarnings.filter(w => !w.handled).length
   };
 
-  // 财务指标表格列配置
+  /**
+   * 财务指标表格列配置
+   * 财务指标监控列表的列定义
+   */
   const indicatorColumns: Column<FinancialIndicator>[] = [
+    // 债券名称列：显示债券名称和发行人名称
     {
       key: 'bondName',
       title: '债券名称',
@@ -58,6 +70,7 @@ const FinanceMonitor: React.FC = () => {
         </div>
       )
     },
+    // 财务指标列：显示指标名称和报告期
     {
       key: 'indicatorName',
       title: '财务指标',
@@ -69,6 +82,7 @@ const FinanceMonitor: React.FC = () => {
         </div>
       )
     },
+    // 当前值列：显示指标当前数值，根据预警等级显示不同颜色
     {
       key: 'currentValue',
       title: '当前值',
@@ -87,6 +101,7 @@ const FinanceMonitor: React.FC = () => {
         </div>
       )
     },
+    // 较上期列：显示环比变化值，带趋势图标
     {
       key: 'changeValue',
       title: '较上期',
@@ -94,9 +109,11 @@ const FinanceMonitor: React.FC = () => {
       align: 'right',
       render: (record) => (
         <div className="flex items-center justify-end gap-1">
+          {/* 上升用红色向上箭头（财务指标上升可能是风险） */}
           {record.changeValue > 0 ? (
             <TrendingUp className="w-4 h-4 text-red-500" />
           ) : record.changeValue < 0 ? (
+            /* 下降用绿色向下箭头 */
             <TrendingDown className="w-4 h-4 text-green-500" />
           ) : null}
           <span className={`text-sm font-medium ${
@@ -110,6 +127,7 @@ const FinanceMonitor: React.FC = () => {
         </div>
       )
     },
+    // 预警等级列：使用Badge显示等级标签
     {
       key: 'warningLevel',
       title: '预警等级',
@@ -120,6 +138,7 @@ const FinanceMonitor: React.FC = () => {
         </Badge>
       )
     },
+    // 阈值说明列：显示指标预警阈值范围
     {
       key: 'thresholdInfo',
       title: '阈值说明',
@@ -127,6 +146,7 @@ const FinanceMonitor: React.FC = () => {
         <span className="text-xs text-gray-500">{record.thresholdInfo}</span>
       )
     },
+    // 操作列：查看详情按钮
     {
       key: 'actions',
       title: '操作',
@@ -142,8 +162,12 @@ const FinanceMonitor: React.FC = () => {
     }
   ];
 
-  // 财务预警表格列配置
+  /**
+   * 财务预警表格列配置
+   * 预警记录列表的列定义
+   */
   const warningColumns: Column<FinanceWarning>[] = [
+    // 债券名称列：显示债券和发行人
     {
       key: 'bondName',
       title: '债券名称',
@@ -155,12 +179,14 @@ const FinanceMonitor: React.FC = () => {
         </div>
       )
     },
+    // 预警指标列：显示触发预警的指标名称
     {
       key: 'indicatorName',
       title: '预警指标',
       width: '150px',
       render: (record) => <span className="text-sm font-medium text-gray-800">{record.indicatorName}</span>
     },
+    // 当前值列：显示触发预警时的指标值，红色加粗
     {
       key: 'currentValue',
       title: '当前值',
@@ -172,6 +198,7 @@ const FinanceMonitor: React.FC = () => {
         </span>
       )
     },
+    // 阈值列：显示预警触发阈值
     {
       key: 'thresholdValue',
       title: '阈值',
@@ -183,6 +210,7 @@ const FinanceMonitor: React.FC = () => {
         </span>
       )
     },
+    // 等级列：显示预警等级
     {
       key: 'warningLevel',
       title: '等级',
@@ -193,12 +221,14 @@ const FinanceMonitor: React.FC = () => {
         </Badge>
       )
     },
+    // 触发日期列：显示预警生成日期
     {
       key: 'triggerDate',
       title: '触发日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.triggerDate}</span>
     },
+    // 处理状态列：显示已处理/待处理状态
     {
       key: 'status',
       title: '处理状态',
@@ -211,6 +241,7 @@ const FinanceMonitor: React.FC = () => {
         )
       )
     },
+    // 处理人列：显示处理该预警的人员
     {
       key: 'handler',
       title: '处理人',
@@ -219,7 +250,11 @@ const FinanceMonitor: React.FC = () => {
     }
   ];
 
-  // 获取当前表格数据
+  /**
+   * 获取当前表格数据
+   * 指标监控页支持按债券名称搜索+按预警等级筛选
+   * 预警记录页支持按债券名称搜索
+   */
   const getTableData = () => {
     switch (activeTab) {
       case 'indicators':
@@ -234,7 +269,9 @@ const FinanceMonitor: React.FC = () => {
     }
   };
 
-  // 获取当前表格列配置
+  /**
+   * 获取当前表格列配置
+   */
   const getColumns = () => {
     switch (activeTab) {
       case 'indicators':
@@ -255,7 +292,10 @@ const FinanceMonitor: React.FC = () => {
     { label: '危险', value: 'danger' }
   ];
 
-  // 标签页配置
+  /**
+   * 标签页配置
+   * Tab切换时重置页码到第1页
+   */
   const tabs = [
     { key: 'indicators', label: '财务指标监控', count: mockFinancialIndicators.length },
     { key: 'warnings', label: '财务预警记录', count: mockFinanceWarnings.length }
@@ -271,7 +311,7 @@ const FinanceMonitor: React.FC = () => {
         ]}
       />
 
-      {/* 统计卡片 */}
+      {/* 统计卡片区域 - 各等级指标数量统计 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="监控指标总数"
@@ -305,7 +345,7 @@ const FinanceMonitor: React.FC = () => {
         />
       </div>
 
-      {/* 标签页切换 */}
+      {/* 标签页切换区域 */}
       <Card bodyClassName="p-0">
         <div className="border-b border-gray-200">
           <div className="flex">
@@ -333,7 +373,7 @@ const FinanceMonitor: React.FC = () => {
           </div>
         </div>
 
-        {/* 搜索和筛选栏 */}
+        {/* 搜索和筛选栏：指标页额外显示等级筛选 */}
         <div className="p-4 border-b border-gray-100">
           <SearchFilter
             searchPlaceholder="搜索债券名称"

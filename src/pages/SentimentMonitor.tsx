@@ -30,19 +30,29 @@ const SentimentMonitor: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 情感类型映射
+  /**
+   * 情感类型映射配置
+   * 定义舆情的三种情感倾向
+   * key: 情感编码
+   * label: 中文显示名称
+   * color: Badge组件颜色
+   * icon: 对应的图标组件
+   */
   const sentimentMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default'; icon: LucideIcon }> = {
-    positive: { label: '正面', color: 'success', icon: ThumbsUp },
-    neutral: { label: '中性', color: 'default', icon: Minus },
-    negative: { label: '负面', color: 'danger', icon: ThumbsDown }
+    positive: { label: '正面', color: 'success', icon: ThumbsUp },  // 正面积极舆情
+    neutral: { label: '中性', color: 'default', icon: Minus },       // 中性客观报道
+    negative: { label: '负面', color: 'danger', icon: ThumbsDown }   // 负面舆情
   };
 
-  // 风险等级映射
+  /**
+   * 风险等级映射配置
+   * 定义舆情风险的四级分类
+   */
   const riskMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    normal: { label: '正常', color: 'success' },
-    attention: { label: '关注', color: 'info' },
-    warning: { label: '预警', color: 'warning' },
-    danger: { label: '危险', color: 'danger' }
+    normal: { label: '正常', color: 'success' },      // 无风险
+    attention: { label: '关注', color: 'info' },        // 需要关注
+    warning: { label: '预警', color: 'warning' },      // 风险预警
+    danger: { label: '危险', color: 'danger' }          // 高风险
   };
 
   // 统计数据
@@ -56,21 +66,35 @@ const SentimentMonitor: React.FC = () => {
     warning: mockSentimentStats.warningCount
   };
 
-  // 正面舆情占比
+  // 正面舆情占比（用于趋势显示）
   const positiveRate = ((stats.positive / stats.total) * 100).toFixed(1);
 
-  // 过滤数据
+  /**
+   * 数据过滤函数
+   * 过滤逻辑：
+   * 1. 搜索文本：匹配标题、摘要或关联债券名称
+   * 2. 情感筛选：选择全部时不过滤，否则匹配指定情感
+   * 3. 风险筛选：选择全部时不过滤，否则匹配指定风险等级
+   * 三个条件同时满足
+   */
   const filteredData = mockSentimentNews.filter(news => {
+    // 搜索条件：标题、摘要或关联债券名称包含搜索文本
     const matchSearch = news.title.includes(searchText) || 
                        news.summary.includes(searchText) ||
                        news.relatedBondNames.some(name => name.includes(searchText));
+    // 情感条件：全部或匹配指定情感
     const matchSentiment = sentimentFilter === 'all' || news.sentiment === sentimentFilter;
+    // 风险条件：全部或匹配指定风险等级
     const matchRisk = riskFilter === 'all' || news.riskLevel === riskFilter;
     return matchSearch && matchSentiment && matchRisk;
   });
 
-  // 新闻表格列配置
+  /**
+   * 新闻表格列配置
+   * 舆情新闻列表的列定义
+   */
   const columns: Column<SentimentNews>[] = [
+    // 舆情标题列：显示标题、来源和发布日期，标题可点击
     {
       key: 'title',
       title: '舆情标题',
@@ -87,6 +111,7 @@ const SentimentMonitor: React.FC = () => {
         </div>
       )
     },
+    // 情感倾向列：显示带图标的情感标签
     {
       key: 'sentiment',
       title: '情感倾向',
@@ -101,6 +126,7 @@ const SentimentMonitor: React.FC = () => {
         );
       }
     },
+    // 风险等级列：显示风险等级标签（点状Badge）
     {
       key: 'riskLevel',
       title: '风险等级',
@@ -111,6 +137,7 @@ const SentimentMonitor: React.FC = () => {
         </Badge>
       )
     },
+    // 关联债券列：以标签形式显示相关的债券名称
     {
       key: 'relatedBondNames',
       title: '关联债券',
@@ -125,6 +152,7 @@ const SentimentMonitor: React.FC = () => {
         </div>
       )
     },
+    // 关键词列：以#标签形式显示舆情关键词
     {
       key: 'keywords',
       title: '关键词',
@@ -139,6 +167,7 @@ const SentimentMonitor: React.FC = () => {
         </div>
       )
     },
+    // 阅读量列：显示阅读数，单位转换为k（千）
     {
       key: 'readCount',
       title: '阅读量',
@@ -148,6 +177,7 @@ const SentimentMonitor: React.FC = () => {
         <span className="text-sm text-gray-600">{(record.readCount / 1000).toFixed(1)}k</span>
       )
     },
+    // 处理状态列：显示已处理/待处理
     {
       key: 'isHandled',
       title: '处理状态',
@@ -160,6 +190,7 @@ const SentimentMonitor: React.FC = () => {
         )
       )
     },
+    // 操作列：查看详情和外部链接按钮
     {
       key: 'actions',
       title: '操作',
@@ -205,7 +236,7 @@ const SentimentMonitor: React.FC = () => {
         ]}
       />
 
-      {/* 统计卡片 */}
+      {/* 统计卡片区域 - 舆情数据概览 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <StatCard
           title="舆情总数"
@@ -253,7 +284,7 @@ const SentimentMonitor: React.FC = () => {
         />
       </div>
 
-      {/* 搜索和筛选 */}
+      {/* 搜索和筛选区域 */}
       <Card>
         <SearchFilter
           searchPlaceholder="搜索舆情标题、摘要或关联债券"

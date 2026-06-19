@@ -27,54 +27,70 @@ import type { FundUsagePlan, FundUseRecord, FundChangeRequest } from '@/types/fu
 
 // 募集资金追踪页面
 const FundTracker: React.FC = () => {
+  // 当前激活的标签页：专户概览/使用计划/使用台账/用途变更
   const [activeTab, setActiveTab] = useState<'overview' | 'usage' | 'records' | 'changes'>('overview');
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  // 用途类型映射
+  /**
+   * 用途类型映射配置
+   * 定义募集资金的各种使用用途分类
+   */
   const purposeTypeMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    project: { label: '项目建设', color: 'info' },
-    repay_debt: { label: '偿还借款', color: 'warning' },
-    supplement_liquidity: { label: '补充流动资金', color: 'default' },
-    merge_acquisition: { label: '并购重组', color: 'success' },
-    other: { label: '其他', color: 'default' }
+    project: { label: '项目建设', color: 'info' },              // 用于募投项目建设
+    repay_debt: { label: '偿还借款', color: 'warning' },        // 用于偿还公司债务
+    supplement_liquidity: { label: '补充流动资金', color: 'default' }, // 补充营运资金
+    merge_acquisition: { label: '并购重组', color: 'success' },  // 用于并购重组
+    other: { label: '其他', color: 'default' }                   // 其他用途
   };
 
-  // 记录状态映射
+  /**
+   * 记录状态映射配置
+   * 定义资金使用记录的审核状态
+   */
   const recordStatusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    pending: { label: '待审核', color: 'warning' },
-    approved: { label: '已审核', color: 'success' },
-    rejected: { label: '已驳回', color: 'danger' }
+    pending: { label: '待审核', color: 'warning' },   // 等待审核
+    approved: { label: '已审核', color: 'success' },  // 审核通过
+    rejected: { label: '已驳回', color: 'danger' }    // 审核驳回
   };
 
-  // 变更申请状态映射
+  /**
+   * 变更申请状态映射配置
+   * 定义用途变更申请的审批状态
+   */
   const changeStatusMap: Record<string, { label: string; color: 'success' | 'warning' | 'info' | 'danger' | 'default' }> = {
-    pending: { label: '审批中', color: 'warning' },
-    approved: { label: '已通过', color: 'success' },
-    rejected: { label: '已驳回', color: 'danger' }
+    pending: { label: '审批中', color: 'warning' },   // 审批流程中
+    approved: { label: '已通过', color: 'success' },  // 审批通过
+    rejected: { label: '已驳回', color: 'danger' }    // 审批驳回
   };
 
-  // 统计数据
+  // 统计数据计算
   const totalRaised = mockFundUsagePlans.reduce((sum, p) => sum + p.plannedAmount, 0) / 10000;
   const totalUsed = mockFundUsagePlans.reduce((sum, p) => sum + p.usedAmount, 0) / 10000;
   const totalRemaining = totalRaised - totalUsed;
   const pendingChanges = mockFundChangeRequests.filter(c => c.status === 'pending').length;
 
-  // 资金使用计划表格列配置
+  /**
+   * 资金使用计划表格列配置
+   * 使用计划列表的列定义
+   */
   const usageColumns: Column<FundUsagePlan>[] = [
+    // 债券名称列：显示关联债券名称
     {
       key: 'bondName',
       title: '债券名称',
       width: '160px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
+    // 项目/用途名称列：显示具体用途名称
     {
       key: 'projectName',
       title: '项目/用途名称',
       width: '220px',
       render: (record) => <span className="text-sm text-gray-700">{record.projectName}</span>
     },
+    // 用途类型列：显示用途分类标签
     {
       key: 'purposeType',
       title: '用途类型',
@@ -85,6 +101,7 @@ const FundTracker: React.FC = () => {
         </Badge>
       )
     },
+    // 计划金额列：显示计划投入金额（万元）
     {
       key: 'plannedAmount',
       title: '计划金额(万)',
@@ -92,6 +109,7 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-gray-900">{record.plannedAmount.toLocaleString()}</span>
     },
+    // 已使用列：显示已投入金额（万元），深蓝色高亮
     {
       key: 'usedAmount',
       title: '已使用(万)',
@@ -99,6 +117,7 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm text-[#1e3a8a] font-medium">{record.usedAmount.toLocaleString()}</span>
     },
+    // 使用进度列：进度条显示使用百分比，根据进度变色
     {
       key: 'progressPercent',
       title: '使用进度',
@@ -123,26 +142,33 @@ const FundTracker: React.FC = () => {
     }
   ];
 
-  // 资金使用记录表格列配置
+  /**
+   * 资金使用记录表格列配置
+   * 使用台账（实际支出记录）的列定义
+   */
   const recordColumns: Column<FundUseRecord>[] = [
+    // 债券名称列：显示关联债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '150px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
+    // 用途项目列：显示资金投向的项目
     {
       key: 'projectName',
       title: '用途项目',
       width: '200px',
       render: (record) => <span className="text-sm text-gray-700">{record.projectName}</span>
     },
+    // 使用日期列：显示资金支出日期
     {
       key: 'useDate',
       title: '使用日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.useDate}</span>
     },
+    // 金额列：显示支出金额（万元），橙色高亮
     {
       key: 'amount',
       title: '金额(万)',
@@ -150,18 +176,21 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-[#d97706]">{record.amount.toLocaleString()}</span>
     },
+    // 收款方列：显示资金接收方名称
     {
       key: 'payee',
       title: '收款方',
       width: '200px',
       render: (record) => <span className="text-sm text-gray-700 truncate block max-w-[180px]">{record.payee}</span>
     },
+    // 凭证号列：显示会计凭证编号，等宽字体显示
     {
       key: 'voucherNumber',
       title: '凭证号',
       width: '130px',
       render: (record) => <span className="text-sm text-gray-500 font-mono">{record.voucherNumber}</span>
     },
+    // 状态列：显示审核状态
     {
       key: 'status',
       title: '状态',
@@ -174,26 +203,33 @@ const FundTracker: React.FC = () => {
     }
   ];
 
-  // 用途变更申请表格列配置
+  /**
+   * 用途变更申请表格列配置
+   * 资金用途变更申请列表的列定义
+   */
   const changeColumns: Column<FundChangeRequest>[] = [
+    // 债券名称列：显示关联债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '150px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
+    // 原用途列：显示变更前的用途
     {
       key: 'originalPurpose',
       title: '原用途',
       width: '180px',
       render: (record) => <span className="text-sm text-gray-600">{record.originalPurpose}</span>
     },
+    // 新用途列：显示变更后的用途
     {
       key: 'newPurpose',
       title: '新用途',
       width: '180px',
       render: (record) => <span className="text-sm text-gray-700">{record.newPurpose}</span>
     },
+    // 变更金额列：显示涉及变更的金额（万元），红色高亮
     {
       key: 'changeAmount',
       title: '变更金额(万)',
@@ -201,18 +237,21 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-sm font-medium text-red-600">{record.changeAmount.toLocaleString()}</span>
     },
+    // 申请日期列：显示提交申请的日期
     {
       key: 'applyDate',
       title: '申请日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.applyDate}</span>
     },
+    // 申请人列：显示提交申请的人员
     {
       key: 'applicant',
       title: '申请人',
       width: '90px',
       render: (record) => <span className="text-sm text-gray-700">{record.applicant}</span>
     },
+    // 状态列：显示审批状态
     {
       key: 'status',
       title: '状态',
@@ -225,7 +264,10 @@ const FundTracker: React.FC = () => {
     }
   ];
 
-  // 专户总览列配置
+  /**
+   * 专户总览数据处理
+   * 将专户数据与资金计划关联，补充债券名称信息
+   */
   const accountColumns = mockSpecialAccounts.map(account => ({
     id: account.id,
     bondName: mockFundUsagePlans.find(p => p.bondId === account.bondId)?.bondName || '-',
@@ -235,25 +277,33 @@ const FundTracker: React.FC = () => {
     lastUpdateDate: account.lastUpdateDate
   }));
 
+  /**
+   * 专户总览表格列配置
+   * 募集资金专户列表的列定义
+   */
   const overviewColumns: Column<typeof accountColumns[0]>[] = [
+    // 债券名称列：显示专户对应的债券
     {
       key: 'bondName',
       title: '债券名称',
       width: '160px',
       render: (record) => <span className="font-medium text-gray-900">{record.bondName}</span>
     },
+    // 开户银行列：显示专户开立的银行名称
     {
       key: 'bankName',
       title: '开户银行',
       width: '200px',
       render: (record) => <span className="text-sm text-gray-700">{record.bankName}</span>
     },
+    // 专户账号列：显示银行账号，等宽字体
     {
       key: 'accountNumber',
       title: '专户账号',
       width: '180px',
       render: (record) => <span className="text-sm text-gray-500 font-mono">{record.accountNumber}</span>
     },
+    // 账户余额列：显示当前专户余额（万元），大号橙色字体突出
     {
       key: 'balance',
       title: '账户余额(万)',
@@ -261,12 +311,14 @@ const FundTracker: React.FC = () => {
       align: 'right',
       render: (record) => <span className="text-lg font-bold text-[#d97706]">{record.balance.toLocaleString()}</span>
     },
+    // 更新日期列：显示最后一次对账日期
     {
       key: 'lastUpdateDate',
       title: '更新日期',
       width: '110px',
       render: (record) => <span className="text-sm text-gray-600">{record.lastUpdateDate}</span>
     },
+    // 操作列：查看详情按钮
     {
       key: 'actions',
       title: '操作',
@@ -282,23 +334,33 @@ const FundTracker: React.FC = () => {
     }
   ];
 
-  // 获取当前表格数据
+  /**
+   * 获取当前表格数据
+   * 根据激活的标签页返回对应数据，并应用搜索过滤
+   */
   const getTableData = () => {
     switch (activeTab) {
       case 'overview':
+        // 专户概览：按债券名称搜索
         return accountColumns.filter(a => a.bondName.includes(searchText));
       case 'usage':
+        // 使用计划：按债券名称或项目名称搜索
         return mockFundUsagePlans.filter(p => p.bondName.includes(searchText) || p.projectName.includes(searchText));
       case 'records':
+        // 使用台账：按债券名称搜索
         return mockFundUseRecords.filter(r => r.bondName.includes(searchText));
       case 'changes':
+        // 用途变更：按债券名称搜索
         return mockFundChangeRequests.filter(c => c.bondName.includes(searchText));
       default:
         return [];
     }
   };
 
-  // 获取当前表格列配置
+  /**
+   * 获取当前表格列配置
+   * 根据激活的标签页返回对应的列配置
+   */
   const getColumns = () => {
     switch (activeTab) {
       case 'overview':
@@ -314,7 +376,10 @@ const FundTracker: React.FC = () => {
     }
   };
 
-  // 标签页配置
+  /**
+   * 标签页配置数组
+   * Tab切换逻辑：点击切换时重置页码到第1页
+   */
   const tabs = [
     { key: 'overview', label: '专户概览', count: mockSpecialAccounts.length },
     { key: 'usage', label: '使用计划', count: mockFundUsagePlans.length },
@@ -331,7 +396,10 @@ const FundTracker: React.FC = () => {
           { title: '募集资金追踪', href: '/fund-tracker' }
         ]}
         extra={
-          <Button variant="primary">
+          <Button 
+            variant="primary"
+            onClick={() => alert('新增资金使用记录功能开发中...')}
+          >
             <Plus className="w-4 h-4 mr-1" />
             新增资金使用
           </Button>
@@ -367,7 +435,7 @@ const FundTracker: React.FC = () => {
         />
       </div>
 
-      {/* 标签页切换 */}
+      {/* 标签页切换区域 */}
       <Card bodyClassName="p-0">
         <div className="border-b border-gray-200">
           <div className="flex">
