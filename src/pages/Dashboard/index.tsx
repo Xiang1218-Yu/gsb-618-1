@@ -14,7 +14,7 @@ import {
   MessageSquare,
   FileCheck,
 } from 'lucide-react';
-import { useAppStore, fundUsageTrend, bondTypeDistribution } from '@/store';
+import { useAppStore } from '@/store';
 import { BarLineChart, PieChart } from '@/components/charts';
 import { formatAmount, getRiskLevelClass, getRiskLevelText, formatDate } from '@/utils/formatters';
 import { RiskLevel } from '@/types';
@@ -28,6 +28,8 @@ const Dashboard = () => {
   const todoItems = useAppStore((state) => state.todoItems);
   const completeTodo = useAppStore((state) => state.completeTodo);
   const handleAlert = useAppStore((state) => state.handleAlert);
+  const fundUsageTrend = useAppStore((state) => state.fundUsageTrend);
+  const bondTypeDistribution = useAppStore((state) => state.bondTypeDistribution);
 
   const [selectedAlertFilter, setSelectedAlertFilter] = useState<RiskLevel | 'all'>('all');
 

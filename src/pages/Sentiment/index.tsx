@@ -9,7 +9,7 @@ import {
   Radio,
   ExternalLink,
 } from 'lucide-react';
-import { useAppStore, sentimentDistribution, sentimentSourceDistribution } from '@/store';
+import { useAppStore } from '@/store';
 import { getSentimentClass, getSentimentText, formatDate } from '@/utils/formatters';
 import { PieChart } from '@/components/charts';
 
@@ -22,8 +22,10 @@ type SentimentFilter = 'all' | 'positive' | 'neutral' | 'negative';
  * 舆情监控中心页面
  */
 const Sentiment = () => {
+  const sentiments = useAppStore((state) => state.sentiments);
   const bonds = useAppStore((state) => state.bonds);
-  const getSentimentsByBondId = useAppStore((state) => state.getSentimentsByBondId);
+  const sentimentDistribution = useAppStore((state) => state.sentimentDistribution);
+  const sentimentSourceDistribution = useAppStore((state) => state.sentimentSourceDistribution);
 
   const [selectedFilter, setSelectedFilter] = useState<SentimentFilter>('all');
 
@@ -31,16 +33,14 @@ const Sentiment = () => {
    * 获取所有舆情数据并关联债券名称
    */
   const allSentiments = useMemo(() => {
-    const sentiments = bonds.flatMap((bond) =>
-      getSentimentsByBondId(bond.id).map((sentiment) => ({
-        ...sentiment,
-        bondName: bond.bondName,
-      }))
-    );
-    return sentiments.sort(
+    const mapped = sentiments.map((sentiment) => ({
+      ...sentiment,
+      bondName: bonds.find((bond) => bond.id === sentiment.bondId)?.bondName || '',
+    }));
+    return mapped.sort(
       (a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
     );
-  }, [bonds, getSentimentsByBondId]);
+  }, [sentiments, bonds]);
 
   /**
    * 统计数据计算
@@ -65,7 +65,7 @@ const Sentiment = () => {
       ...item,
       color: colors[index % colors.length],
     }));
-  }, []);
+  }, [sentimentSourceDistribution]);
 
   /**
    * 根据筛选条件过滤舆情

@@ -10,8 +10,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { useAppStore, mockFundReceived } from '@/store';
-import { fundUsageTrend } from '@/mock';
+import { useAppStore } from '@/store';
 import {
   formatAmount,
   formatWanAmount,
@@ -26,7 +25,9 @@ import { BarLineChart } from '@/components/charts';
  * 展示监管专户统计、资金到账信息、资金使用流水及合规状态
  */
 const FundTracking = () => {
+  const fundReceivedList = useAppStore((state) => state.fundReceivedList);
   const fundFlows = useAppStore((state) => state.fundFlows);
+  const fundUsageTrend = useAppStore((state) => state.fundUsageTrend);
   const bonds = useAppStore((state) => state.bonds);
 
   /**
@@ -42,8 +43,8 @@ const FundTracking = () => {
    * 统计数据计算
    */
   const stats = useMemo(() => {
-    const custodianCount = mockFundReceived.length;
-    const totalReceived = mockFundReceived.reduce((sum, item) => sum + item.receivedAmount, 0);
+    const custodianCount = fundReceivedList.length;
+    const totalReceived = fundReceivedList.reduce((sum, item) => sum + item.receivedAmount, 0);
     const totalDisbursedWan = fundFlows.reduce((sum, item) => sum + item.amount, 0);
     const nonCompliantCount = fundFlows.filter((f) => !f.isCompliant).length;
     const totalDisbursed = totalDisbursedWan / 10000;
@@ -57,7 +58,7 @@ const FundTracking = () => {
       nonCompliantCount,
       usageProgress,
     };
-  }, [fundFlows, bonds]);
+  }, [fundFlows, fundReceivedList, bonds]);
 
   /**
    * 统计卡片配置
@@ -245,7 +246,7 @@ const FundTracking = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mockFundReceived.map((item) => {
+              {fundReceivedList.map((item) => {
                 const bond = getBondById(item.bondId);
                 return (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">

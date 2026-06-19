@@ -9,7 +9,7 @@ import {
   DollarSign,
   FileWarning,
 } from 'lucide-react';
-import { useAppStore, mockPayments, mockDisclosures } from '@/store';
+import { useAppStore } from '@/store';
 import { formatWanAmount, formatDate } from '@/utils/formatters';
 import type { Payment, Disclosure } from '@/types';
 
@@ -60,6 +60,8 @@ const disclosureStatusConfig: Record<string, { text: string; bgClass: string; te
  * 存续期管理页面
  */
 const Duration = () => {
+  const payments = useAppStore((state) => state.payments);
+  const disclosures = useAppStore((state) => state.disclosures);
   const bonds = useAppStore((state) => state.bonds);
 
   /**
@@ -76,13 +78,13 @@ const Duration = () => {
    * 统计卡片数据
    */
   const statCards = useMemo(() => {
-    const pendingInterest = mockPayments.filter(
+    const pendingInterest = payments.filter(
       (p) => p.paymentType === 'interest' && p.status !== 'completed' && p.status !== 'overdue'
     ).length;
-    const pendingPrincipal = mockPayments.filter(
+    const pendingPrincipal = payments.filter(
       (p) => p.paymentType === 'principal' && p.status !== 'completed' && p.status !== 'overdue'
     ).length;
-    const pendingDisclosure = mockDisclosures.filter(
+    const pendingDisclosure = disclosures.filter(
       (d) => d.status !== 'disclosed'
     ).length;
     const defaultedBonds = bonds.filter((b) => b.status === 'default').length;
@@ -129,7 +131,7 @@ const Duration = () => {
         desc: '已发生违约的债券',
       },
     ];
-  }, [bonds]);
+  }, [bonds, payments, disclosures]);
 
   /**
    * 未来3个月的付息兑付事项（按日期排序，以2024-06-19为基准日）
@@ -139,13 +141,13 @@ const Duration = () => {
     const threeMonthsLater = new Date(today);
     threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
 
-    return mockPayments
+    return payments
       .filter((p) => {
         const payDate = new Date(p.payDate);
         return payDate >= today && payDate <= threeMonthsLater;
       })
       .sort((a, b) => new Date(a.payDate).getTime() - new Date(b.payDate).getTime());
-  }, []);
+  }, [payments]);
 
   /**
    * 按日期分组付息兑付事项
@@ -165,12 +167,12 @@ const Duration = () => {
   /**
    * 信息披露事项列表
    */
-  const disclosures = useMemo(() => {
-    return [...mockDisclosures].sort((a, b) => {
+  const sortedDisclosures = useMemo(() => {
+    return [...disclosures].sort((a, b) => {
       const statusOrder: Record<string, number> = { overdue: 0, upcoming: 1, pending: 2, disclosed: 3 };
       return (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
     });
-  }, []);
+  }, [disclosures]);
 
   /**
    * 违约债券信息（22盛世01）
@@ -183,8 +185,8 @@ const Duration = () => {
    * 违约付息事项
    */
   const defaultPayments = useMemo(() => {
-    return mockPayments.filter((p) => p.bondId === 'bond-008' && p.status === 'overdue');
-  }, []);
+    return payments.filter((p) => p.bondId === 'bond-008' && p.status === 'overdue');
+  }, [payments]);
 
   /**
    * 违约处置进展步骤
@@ -341,7 +343,7 @@ const Duration = () => {
               </tr>
             </thead>
             <tbody>
-              {disclosures.map((disclosure: Disclosure) => {
+              {sortedDisclosures.map((disclosure: Disclosure) => {
                 const bondName = getBondName(disclosure.bondId);
                 const statusConf = disclosureStatusConfig[disclosure.status] || disclosureStatusConfig.pending;
                 return (

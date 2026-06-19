@@ -11,7 +11,7 @@ import {
   FileBarChart,
   Send,
 } from 'lucide-react';
-import { useAppStore, mockComplianceChecks } from '@/store';
+import { useAppStore } from '@/store';
 import { formatDate } from '@/utils/formatters';
 
 /**
@@ -53,6 +53,7 @@ interface ReportItem {
  */
 const Reports = () => {
   const bonds = useAppStore((state) => state.bonds);
+  const complianceChecks = useAppStore((state) => state.complianceChecks);
   const [generatingReportId, setGeneratingReportId] = useState<string | null>(null);
 
   /**
@@ -64,14 +65,6 @@ const Reports = () => {
     const bond = bonds.find((b) => b.id === bondId);
     return bond?.bondName || '-';
   };
-
-  /**
-   * 合规检查数据（补充整改状态默认值）
-   */
-  const complianceChecks = mockComplianceChecks.map((check) => ({
-    ...check,
-    rectificationStatus: check.rectificationStatus || (check.isCompliant ? 'none' : 'pending'),
-  }));
 
   /**
    * 统计数据计算

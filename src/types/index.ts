@@ -245,7 +245,7 @@ export interface Payment {
   /** 付息/兑付日期 */
   payDate: string;
   /** 状态 */
-  status: 'pending' | 'processing' | 'completed' | 'overdue';
+  status: 'pending' | 'processing' | 'completed' | 'overdue' | 'upcoming';
   /** 备注 */
   remark?: string;
 }

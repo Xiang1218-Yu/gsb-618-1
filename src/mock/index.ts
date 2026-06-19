@@ -721,8 +721,8 @@ export const mockPayments: Payment[] = [
     paymentType: 'interest',
     amount: 9450,
     payDate: '2024-07-10',
-    status: 'upcoming' as unknown as 'pending',
-  } as Payment,
+    status: 'upcoming',
+  },
 ];
 
 /**

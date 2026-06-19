@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, FileBarChart } from 'lucide-react';
-import { useAppStore, debtRatioTrend } from '@/store';
+import { useAppStore } from '@/store';
 import { getRiskLevelClass, getRiskLevelText, formatDate, formatPercent, getBondTypeText } from '@/utils/formatters';
 import { MultiLineChart, GaugeChart } from '@/components/charts';
 import { RiskLevel } from '@/types';
@@ -10,8 +10,9 @@ import { RiskLevel } from '@/types';
  * 展示债券财务指标监控、风险预警、趋势分析等功能
  */
 const FinanceMonitor = () => {
+  const financialIndices = useAppStore((state) => state.financialIndices);
   const bonds = useAppStore((state) => state.bonds);
-  const getFinancialIndicesByBondId = useAppStore((state) => state.getFinancialIndicesByBondId);
+  const debtRatioTrend = useAppStore((state) => state.debtRatioTrend);
 
   /**
    * 获取所有财务指标数据
@@ -33,43 +34,45 @@ const FinanceMonitor = () => {
       isBetter: boolean;
     }> = [];
 
-    bonds.forEach((bond) => {
-      const bondIndices = getFinancialIndicesByBondId(bond.id);
-      bondIndices.forEach((index) => {
+    financialIndices.forEach((index) => {
+      const bond = bonds.find((b) => b.id === index.bondId);
+      if (bond) {
         indices.push({
           ...index,
           bondName: bond.bondName,
           bondType: bond.bondType,
         });
-      });
+      }
     });
 
     return indices;
-  }, [bonds, getFinancialIndicesByBondId]);
+  }, [financialIndices, bonds]);
 
   /**
    * 获取高风险债券（资产负债率超标）
    */
   const highRiskBonds = useMemo(() => {
-    return allFinancialIndices
+    return financialIndices
       .filter((index) => index.indexName === '资产负债率' && index.status === RiskLevel.High)
       .map((index) => {
         const bond = bonds.find((b) => b.id === index.bondId);
         return {
           ...index,
+          bondName: bond?.bondName || '',
+          bondType: bond?.bondType || '',
           issuerName: bond?.issuer?.issuerName || '',
           bondCode: bond?.bondCode || '',
           issueAmount: bond?.issueAmount || 0,
         };
       });
-  }, [allFinancialIndices, bonds]);
+  }, [financialIndices, bonds]);
 
   /**
    * 获取bond-002盛世地产的4个财务指标用于仪表盘展示
    */
   const shengshiIndices = useMemo(() => {
-    return getFinancialIndicesByBondId('bond-002');
-  }, [getFinancialIndicesByBondId]);
+    return financialIndices.filter((index) => index.bondId === 'bond-002');
+  }, [financialIndices]);
 
   /**
    * 资产负债率指标
@@ -398,7 +401,7 @@ const FinanceMonitor = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-100">
-              {allFinancialIndices.map((index, idx) => (
+              {allFinancialIndices.map((index) => (
                 <tr
                   key={index.id}
                   className={`hover:bg-slate-50 transition-colors ${
