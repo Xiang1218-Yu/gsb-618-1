@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle, Clock, ExternalLink, MessageSquare, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, ExternalLink, MessageSquare, TrendingUp, TrendingDown, Minus, Eye, Share2 } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
+import Modal from '../../components/common/Modal';
 import { useAppStore } from '../../store';
 
 // 舆情动态监控页面
@@ -8,6 +9,7 @@ const SentimentPage = () => {
   const { sentimentNews, markNewsAsHandled, alerts, handleAlert } = useAppStore();
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(sentimentNews[0]?.id || null);
+  const [showNewsDetail, setShowNewsDetail] = useState(false);
 
   const selectedNews = sentimentNews.find((n) => n.id === selectedNewsId);
   const highRiskAlerts = alerts.filter((a) => a.level === 'high' && !a.isHandled);
@@ -272,8 +274,11 @@ const SentimentPage = () => {
                     )}
                   </div>
                   <div className="flex gap-3">
-                    <button className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium inline-flex items-center justify-center gap-2">
-                      <ExternalLink className="w-4 h-4" />
+                    <button
+                      onClick={() => setShowNewsDetail(true)}
+                      className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium inline-flex items-center justify-center gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
                       查看原文
                     </button>
                     {!selectedNews.isHandled && (
@@ -285,6 +290,13 @@ const SentimentPage = () => {
                       </button>
                     )}
                   </div>
+                  <button
+                    onClick={() => alert('链接已复制到剪贴板')}
+                    className="w-full mt-2 px-4 py-2 text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium inline-flex items-center justify-center gap-2"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    分享舆情
+                  </button>
                 </div>
               </div>
             </div>
@@ -296,6 +308,50 @@ const SentimentPage = () => {
           )}
         </div>
       </div>
+
+      {/* 查看原文弹窗 */}
+      <Modal
+        isOpen={showNewsDetail}
+        onClose={() => setShowNewsDetail(false)}
+        title="舆情原文"
+      >
+        {selectedNews && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span>{selectedNews.source}</span>
+              <span>·</span>
+              <span>{selectedNews.publishDate}</span>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">{selectedNews.title}</h3>
+            <div className="prose prose-sm max-w-none">
+              <p className="text-slate-700 leading-relaxed">{selectedNews.summary}</p>
+              <p className="text-slate-600 leading-relaxed mt-4">
+                【正文内容】根据相关报道，{selectedNews.relatedIssuer}近期经营状况受到市场广泛关注。
+                本资讯来源于公开信息整理，仅供参考，不构成任何投资建议。投资者据此操作，风险自担。
+              </p>
+              <p className="text-slate-500 text-sm mt-4 italic">
+                （以上为模拟原文内容，实际使用时将对接真实舆情数据源）
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); window.open('https://www.example.com', '_blank'); }}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                打开原文链接
+              </a>
+              <button
+                onClick={() => setShowNewsDetail(false)}
+                className="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

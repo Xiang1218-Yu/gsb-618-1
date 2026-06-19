@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Search, Calendar, Building2, Percent, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Calendar, Building2, Percent, Shield, AlertCircle, CheckCircle, FileText, Download, Eye } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
+import Modal from '../../components/common/Modal';
 import { useAppStore } from '../../store';
 import type { DurationBond } from '../../types';
 
 // 存续期管理页面
 const DurationPage = () => {
-  const { durationBonds } = useAppStore();
+  const navigate = useNavigate();
+  const { durationBonds, reports } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedBond, setSelectedBond] = useState<DurationBond | null>(durationBonds[0] || null);
+  const [showDisclosureModal, setShowDisclosureModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // 过滤债券列表
   const filteredBonds = durationBonds.filter((bond) => {
@@ -20,6 +25,11 @@ const DurationPage = () => {
     const matchesStatus = statusFilter === 'all' || bond.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // 获取当前债券相关报告
+  const bondReports = selectedBond
+    ? reports.filter((r) => r.bondName === selectedBond.bondName)
+    : [];
 
   // 获取状态样式
   const getStatusConfig = (status: string) => {
@@ -216,10 +226,18 @@ const DurationPage = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  <button
+                    onClick={() => setShowDisclosureModal(true)}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
                     信息披露
                   </button>
-                  <button className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium">
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
                     查看报告
                   </button>
                 </div>
@@ -232,6 +250,79 @@ const DurationPage = () => {
           )}
         </div>
       </div>
+
+      {/* 信息披露弹窗 */}
+      <Modal
+        isOpen={showDisclosureModal}
+        onClose={() => setShowDisclosureModal(false)}
+        title="信息披露"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">选择需要披露的信息类型：</p>
+          <div className="space-y-2">
+            {['年度报告', '半年度报告', '季度报告', '重大事项公告', '付息兑付公告', '受托管理事务报告'].map((item) => (
+              <button
+                key={item}
+                onClick={() => { alert(`已提交「${item}」披露申请，正在跳转至报告编辑页面...`); setShowDisclosureModal(false); navigate('/reports'); }}
+                className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+              >
+                <FileText className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-slate-900">{item}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowDisclosureModal(false)}
+            className="w-full px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            取消
+          </button>
+        </div>
+      </Modal>
+
+      {/* 查看报告弹窗 */}
+      <Modal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        title="相关报告"
+      >
+        <div className="space-y-3">
+          {bondReports.length === 0 ? (
+            <p className="text-center text-slate-500 py-8">暂无相关报告</p>
+          ) : (
+            bondReports.map((report) => (
+              <div key={report.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{report.reportName}</p>
+                  <p className="text-xs text-slate-500 mt-1">{report.reportPeriod} · {report.createDate}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => alert('正在打开报告预览...')}
+                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    <Eye className="w-4 h-4 text-slate-600" />
+                  </button>
+                  <button
+                    onClick={() => alert('正在下载报告...')}
+                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                  >
+                    <Download className="w-4 h-4 text-slate-600" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => { setShowReportModal(false); navigate('/reports'); }}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              前往报告中心
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
