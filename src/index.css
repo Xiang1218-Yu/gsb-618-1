@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 引入金融驾驶舱字体：标题衬线 + 正文 + 等宽数字 */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@500;600;700&display=swap');
+
+:root {
+  /* 设计令牌：深墨蓝主基调 + 金融金 + 警示红绿 */
+  --color-bg: #0B1B2B;
+  --color-bg-2: #0F2335;
+  --color-bg-3: #142B40;
+  --color-line: #1F3B55;
+  --color-gold: #C9A96E;
+  --color-gold-2: #E2C18B;
+  --color-red: #D64545;
+  --color-green: #2E8B6B;
+  --color-blue: #4A8FB8;
+  --color-text: #E6EDF3;
+  --color-text-muted: #8AA1B8;
+  --color-text-faint: #5C7388;
+
+  font-family: 'IBM Plex Sans', 'Noto Serif SC', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+}
+
+/* 全局背景：等距网格 + 噪点 + 微妙径向光晕 */
+body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(201, 169, 110, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(74, 143, 184, 0.08), transparent 60%),
+    linear-gradient(rgba(31, 59, 85, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 59, 85, 0.18) 1px, transparent 1px);
+  background-size: auto, auto, 40px 40px, 40px 40px;
+  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+}
+
+/* 噪点纹理覆盖层 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  z-index: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* 字体语义 */
+.font-display { font-family: 'Cormorant Garamond', 'Noto Serif SC', serif; letter-spacing: 0.02em; }
+.font-mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
+.font-sans { font-family: 'IBM Plex Sans', 'Noto Serif SC', sans-serif; }
+
+/* 金色分隔线 */
+.gold-rule {
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  height: 1px;
+  width: 100%;
+}
+
+/* 卡片：深底 + 金边描边 + 微妙内阴影 */
+.panel {
+  background: linear-gradient(180deg, rgba(20, 43, 64, 0.85), rgba(15, 35, 53, 0.85));
+  border: 1px solid rgba(31, 59, 85, 0.9);
+  position: relative;
+}
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 110, 0.6), transparent);
+}
+
+.panel-glow:hover {
+  box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.45), 0 8px 24px -12px rgba(201, 169, 110, 0.25);
+}
+
+/* 滚动条样式 */
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(201, 169, 110, 0.25); border-radius: 0; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(201, 169, 110, 0.6); }
+
+/* 数字滚动入场动画 */
+@keyframes ticker-in {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.animate-ticker { animation: ticker-in 0.6s ease-out both; }
+
+/* 流光动画 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 110, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+/* 状态色块工具类 */
+.status-safe { color: #2E8B6B; }
+.status-warning { color: #C9A96E; }
+.status-danger { color: #D64545; }
+.bg-status-safe { background-color: rgba(46, 139, 107, 0.15); border: 1px solid rgba(46, 139, 107, 0.4); }
+.bg-status-warning { background-color: rgba(201, 169, 110, 0.15); border: 1px solid rgba(201, 169, 110, 0.4); }
+.bg-status-danger { background-color: rgba(214, 69, 69, 0.15); border: 1px solid rgba(214, 69, 69, 0.4); }
+
+/* 直角硬朗按钮 */
+.btn-gold {
+  border: 1px solid rgba(201, 169, 110, 0.6);
+  color: var(--color-gold-2);
+  background: linear-gradient(180deg, rgba(201, 169, 110, 0.1), transparent);
+  padding: 8px 16px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-gold:hover {
+  background: linear-gradient(180deg, rgba(201, 169, 110, 0.25), rgba(201, 169, 110, 0.05));
+  color: #fff;
+  box-shadow: 0 0 12px rgba(201, 169, 110, 0.35);
+}
+
+/* 标签 */
+.tag {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
