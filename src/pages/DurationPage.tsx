@@ -1,10 +1,11 @@
-// 存续期管理页：债券台账 + 兑付日历
-import { useState, useMemo } from 'react';
-import { CalendarClock, Coins, Gift, Repeat } from 'lucide-react';
+// 存续期管理页：债券台账（含 CRUD）+ 兑付日历
+import { useState, useMemo, useEffect } from 'react';
+import { CalendarClock, Coins, Gift, Repeat, Pencil, Trash2, Plus } from 'lucide-react';
 import Panel from '@/components/Panel';
+import Modal, { Field, inputClass } from '@/components/Modal';
 import { usePlatformStore } from '@/store/usePlatformStore';
 import { bondStatusLabel, ratingColorMap, statusColorMap } from '@/lib/utils';
-import type { CouponEventType } from '@/types';
+import type { BondInfo, BondStatus, CouponEventType, CreditRating } from '@/types';
 
 // 兑付事件类型映射
 const eventTypeMap: Record<CouponEventType, { label: string; color: string; icon: typeof Coins }> = {
@@ -14,9 +15,37 @@ const eventTypeMap: Record<CouponEventType, { label: string; color: string; icon
   callable: { label: '回售', color: '#2E8B6B', icon: Repeat },
 };
 
+// 信用评级与状态选项
+const ratingOptions: CreditRating[] = ['AAA', 'AA+', 'AA', 'AA-', 'A+', 'A', 'BBB'];
+const statusOptions: BondStatus[] = ['underwriting', 'issuing', 'duration', 'matured', 'defaulted'];
+
+// 构造空债券表单
+const buildEmptyBond = (): BondInfo => {
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    bondCode: `1026${Date.now().toString().slice(-5)}`,
+    bondName: '',
+    issuer: '',
+    industry: '其他',
+    region: '华东',
+    issueScale: 10,
+    couponRate: 3.5,
+    creditRating: 'AA',
+    issueDate: today,
+    maturityDate: today,
+    status: 'duration',
+    remainingDays: 365,
+    riskScore: 30,
+  };
+};
+
 export default function DurationPage() {
-  const { bonds, coupons } = usePlatformStore();
+  const { bonds, coupons, addBond, updateBond, removeBond } = usePlatformStore();
   const [filterRating, setFilterRating] = useState<string>('全部');
+  // CRUD 弹窗状态
+  const [modalMode, setModalMode] = useState<null | 'create' | 'edit'>(null);
+  const [form, setForm] = useState<BondInfo>(buildEmptyBond());
+  const [deleteCode, setDeleteCode] = useState<string | null>(null);
 
   const allRatings = ['全部', 'AAA', 'AA+', 'AA', 'AA-', 'BBB'];
   const filteredBonds = bonds.filter((b) =>
@@ -44,6 +73,43 @@ export default function DurationPage() {
     return coupons.filter((e) => e.eventDate === dateStr);
   };
 
+  // 当债券列表变化（如删除）后清理可能失效的删除目标
+  useEffect(() => {
+    if (deleteCode && !bonds.find((b) => b.bondCode === deleteCode)) {
+      setDeleteCode(null);
+    }
+  }, [bonds, deleteCode]);
+
+  // 打开新建弹窗
+  const handleOpenCreate = () => {
+    setForm(buildEmptyBond());
+    setModalMode('create');
+  };
+
+  // 打开编辑弹窗
+  const handleOpenEdit = (bond: BondInfo) => {
+    setForm({ ...bond });
+    setModalMode('edit');
+  };
+
+  // 提交表单
+  const handleSubmit = () => {
+    if (!form.bondName.trim() || !form.issuer.trim()) {
+      alert('请填写债券简称与发行人');
+      return;
+    }
+    if (modalMode === 'create') addBond(form);
+    else if (modalMode === 'edit') updateBond(form.bondCode, form);
+    setModalMode(null);
+  };
+
+  // 确认删除
+  const handleConfirmDelete = () => {
+    if (!deleteCode) return;
+    removeBond(deleteCode);
+    setDeleteCode(null);
+  };
+
   return (
     <div className="space-y-6 p-8">
       {/* 债券台账 */}
@@ -52,20 +118,26 @@ export default function DurationPage() {
         title="存续期债券台账"
         subtitle="Bond Ledger"
         action={
-          <div className="flex gap-1">
-            {allRatings.map((r) => (
-              <button
-                key={r}
-                onClick={() => setFilterRating(r)}
-                className={`px-2 py-1 font-mono text-[11px] border transition ${
-                  filterRating === r
-                    ? 'border-gold-light text-gold-light bg-[rgba(201,169,110,0.08)]'
-                    : 'border-line text-[var(--color-text-muted)] hover:border-gold/50'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              {allRatings.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setFilterRating(r)}
+                  className={`px-2 py-1 font-mono text-[11px] border transition ${
+                    filterRating === r
+                      ? 'border-gold-light text-gold-light bg-[rgba(201,169,110,0.08)]'
+                      : 'border-line text-[var(--color-text-muted)] hover:border-gold/50'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="btn-gold flex items-center gap-1" onClick={handleOpenCreate}>
+              <Plus size={12} /> 录入债券
+            </button>
           </div>
         }
       >
@@ -82,13 +154,21 @@ export default function DurationPage() {
                 <th className="pb-3 font-normal text-right">剩余天数</th>
                 <th className="pb-3 font-normal text-right">风险分</th>
                 <th className="pb-3 font-normal text-right">状态</th>
+                <th className="pb-3 font-normal text-right">操作</th>
               </tr>
             </thead>
             <tbody>
+              {filteredBonds.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="py-8 text-center text-[var(--color-text-muted)]">
+                    暂无符合条件的债券
+                  </td>
+                </tr>
+              )}
               {filteredBonds.map((b) => {
                 const riskColor = b.riskScore > 70 ? statusColorMap.danger : b.riskScore > 40 ? statusColorMap.warning : statusColorMap.safe;
                 return (
-                  <tr key={b.bondCode} className="border-t border-line/50 hover:bg-white/[0.02] transition">
+                  <tr key={b.bondCode} className="group border-t border-line/50 hover:bg-white/[0.02] transition">
                     <td className="py-3 font-mono text-[var(--color-text-muted)]">{b.bondCode}</td>
                     <td className="py-3">
                       <div>{b.bondName}</div>
@@ -121,6 +201,26 @@ export default function DurationPage() {
                       }`}>
                         {bondStatusLabel[b.status]}
                       </span>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(b)}
+                          className="border border-line/60 p-1 text-[var(--color-text-muted)] hover:border-gold-light hover:text-gold-light transition"
+                          title="编辑"
+                        >
+                          <Pencil size={11} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteCode(b.bondCode)}
+                          className="border border-line/60 p-1 text-[var(--color-text-muted)] hover:border-signal-red hover:text-signal-red transition"
+                          title="删除"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -235,6 +335,122 @@ export default function DurationPage() {
           </div>
         </div>
       </Panel>
+
+      {/* 债券新建/编辑弹窗 */}
+      <Modal
+        open={modalMode !== null}
+        onClose={() => setModalMode(null)}
+        title={modalMode === 'create' ? '录入存续债券' : '编辑债券信息'}
+        subtitle={modalMode === 'create' ? 'Add Bond' : 'Edit Bond'}
+        width={680}
+        footer={
+          <>
+            <button type="button" className="btn-gold !border-line/70 !text-[var(--color-text-muted)]" onClick={() => setModalMode(null)}>
+              取消
+            </button>
+            <button type="button" className="btn-gold" onClick={handleSubmit}>
+              {modalMode === 'create' ? '创建' : '保存修改'}
+            </button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="债券代码">
+            <input className={inputClass} value={form.bondCode} onChange={(e) => setForm({ ...form, bondCode: e.target.value })} disabled={modalMode === 'edit'} />
+          </Field>
+          <Field label="债券简称">
+            <input className={inputClass} value={form.bondName} onChange={(e) => setForm({ ...form, bondName: e.target.value })} placeholder="如 26北辰汽车SCP005" />
+          </Field>
+          <Field label="发行人" span={2}>
+            <input className={inputClass} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} placeholder="完整发行人名称" />
+          </Field>
+          <Field label="行业">
+            <input className={inputClass} value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} />
+          </Field>
+          <Field label="区域">
+            <input className={inputClass} value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
+          </Field>
+          <Field label="发行规模 (亿元)">
+            <input
+              className={inputClass}
+              type="number"
+              step="0.1"
+              value={form.issueScale}
+              onChange={(e) => setForm({ ...form, issueScale: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="票面利率 (%)">
+            <input
+              className={inputClass}
+              type="number"
+              step="0.01"
+              value={form.couponRate}
+              onChange={(e) => setForm({ ...form, couponRate: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="信用评级">
+            <select className={inputClass} value={form.creditRating} onChange={(e) => setForm({ ...form, creditRating: e.target.value as CreditRating })}>
+              {ratingOptions.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="状态">
+            <select className={inputClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as BondStatus })}>
+              {statusOptions.map((s) => (
+                <option key={s} value={s}>{bondStatusLabel[s]}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="发行日期">
+            <input className={inputClass} type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} />
+          </Field>
+          <Field label="到期日期">
+            <input className={inputClass} type="date" value={form.maturityDate} onChange={(e) => setForm({ ...form, maturityDate: e.target.value })} />
+          </Field>
+          <Field label="剩余天数">
+            <input
+              className={inputClass}
+              type="number"
+              value={form.remainingDays}
+              onChange={(e) => setForm({ ...form, remainingDays: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="风险分 (0-100)">
+            <input
+              className={inputClass}
+              type="number"
+              min={0}
+              max={100}
+              value={form.riskScore}
+              onChange={(e) => setForm({ ...form, riskScore: Number(e.target.value) })}
+            />
+          </Field>
+        </div>
+      </Modal>
+
+      {/* 删除确认弹窗 */}
+      <Modal
+        open={deleteCode !== null}
+        onClose={() => setDeleteCode(null)}
+        title="确认删除债券"
+        subtitle="Confirm Deletion"
+        width={420}
+        footer={
+          <>
+            <button type="button" className="btn-gold !border-line/70 !text-[var(--color-text-muted)]" onClick={() => setDeleteCode(null)}>
+              取消
+            </button>
+            <button type="button" className="btn-gold !border-signal-red/70 !text-signal-red" onClick={handleConfirmDelete}>
+              确认删除
+            </button>
+          </>
+        }
+      >
+        <p className="text-[13px] text-[var(--color-text-muted)]">
+          确认从台账中移除债券 <span className="text-gold-light">{deleteCode}</span> 吗？
+        </p>
+      </Modal>
     </div>
   );
 }
