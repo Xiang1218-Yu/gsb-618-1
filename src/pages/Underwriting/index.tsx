@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Search, Eye, MoreHorizontal, Calendar, Users, TrendingUp } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
+import Modal from '../../components/common/Modal';
 import { useAppStore } from '../../store';
 import type { BondProject } from '../../types';
 
@@ -13,12 +14,25 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'succes
   managing: { label: '存续期', variant: 'success' }
 };
 
+// 债券类型选项
+const bondTypeOptions = ['公司债', '企业债', '中期票据', '短期融资券', '金融债', '绿色债'];
+
 // 承销发行管理页面
 const UnderwritingPage = () => {
-  const { bondProjects } = useAppStore();
+  const { bondProjects, showNewProjectModal, setShowNewProjectModal, addBondProject } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedProject, setSelectedProject] = useState<BondProject | null>(null);
+
+  // 新建项目表单状态
+  const [newProjectForm, setNewProjectForm] = useState({
+    projectName: '',
+    issuerName: '',
+    bondType: '公司债',
+    issueScale: 10,
+    expectedIssueDate: '',
+    teamMembers: ''
+  });
 
   // 过滤项目列表
   const filteredProjects = bondProjects.filter((project) => {
@@ -30,6 +44,36 @@ const UnderwritingPage = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // 处理表单输入变化
+  const handleFormChange = (field: string, value: string | number) => {
+    setNewProjectForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 提交新建项目
+  const handleSubmitProject = () => {
+    if (!newProjectForm.projectName || !newProjectForm.issuerName || !newProjectForm.expectedIssueDate) {
+      alert('请填写必填项');
+      return;
+    }
+    addBondProject({
+      projectName: newProjectForm.projectName,
+      issuerName: newProjectForm.issuerName,
+      bondType: newProjectForm.bondType,
+      issueScale: newProjectForm.issueScale,
+      expectedIssueDate: newProjectForm.expectedIssueDate,
+      teamMembers: newProjectForm.teamMembers.split(/[,，、]/).filter((s) => s.trim())
+    });
+    // 重置表单
+    setNewProjectForm({
+      projectName: '',
+      issuerName: '',
+      bondType: '公司债',
+      issueScale: 10,
+      expectedIssueDate: '',
+      teamMembers: ''
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
@@ -38,7 +82,10 @@ const UnderwritingPage = () => {
           <h1 className="text-2xl font-bold text-slate-900">承销发行管理</h1>
           <p className="text-slate-500 mt-1">管理债券承销项目从立项到发行的全流程</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
+        <button
+          onClick={() => setShowNewProjectModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+        >
           <Plus className="w-5 h-5" />
           新建项目
         </button>
@@ -180,7 +227,6 @@ const UnderwritingPage = () => {
                   <p className="text-sm font-medium text-slate-900 mb-3">发行进度</p>
                   <div className="space-y-4">
                     {['立项准备', '尽职调查', '材料制作', '注册审核', '簿记建档', '发行上市'].map((stage, index) => {
-                      const stages = ['pending', 'approving', 'issuing', 'listed'];
                       const isCompleted = selectedProject.progress >= (index + 1) * 16.67;
                       const isCurrent = selectedProject.currentStage === stage;
 
@@ -218,6 +264,103 @@ const UnderwritingPage = () => {
           )}
         </div>
       </div>
+
+      {/* 新建项目弹窗 */}
+      <Modal
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        title="新建承销项目"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              项目名称 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={newProjectForm.projectName}
+              onChange={(e) => handleFormChange('projectName', e.target.value)}
+              placeholder="例如：2024年第三期公司债"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              发行人名称 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={newProjectForm.issuerName}
+              onChange={(e) => handleFormChange('issuerName', e.target.value)}
+              placeholder="例如：XX科技集团有限公司"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">债券类型</label>
+              <select
+                value={newProjectForm.bondType}
+                onChange={(e) => handleFormChange('bondType', e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {bondTypeOptions.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">发行规模（亿元）</label>
+              <input
+                type="number"
+                value={newProjectForm.issueScale}
+                onChange={(e) => handleFormChange('issueScale', Number(e.target.value))}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              预计发行日期 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={newProjectForm.expectedIssueDate}
+              onChange={(e) => handleFormChange('expectedIssueDate', e.target.value)}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">项目成员（用逗号分隔）</label>
+            <input
+              type="text"
+              value={newProjectForm.teamMembers}
+              onChange={(e) => handleFormChange('teamMembers', e.target.value)}
+              placeholder="例如：张明, 李华, 王芳"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowNewProjectModal(false)}
+              className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleSubmitProject}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              创建项目
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -1,12 +1,28 @@
 import { useState } from 'react';
 import { FileText, FileCheck, Clock, Download, Eye, Plus, Calendar, Building2 } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
+import Modal from '../../components/common/Modal';
 import { useAppStore } from '../../store';
+
+// 报告类型选项
+const reportTypeOptions = [
+  { value: 'regular', label: '定期报告' },
+  { value: 'temporary', label: '临时报告' },
+  { value: 'special', label: '专项报告' }
+];
 
 // 合规报告中心页面
 const ReportsPage = () => {
-  const { reports } = useAppStore();
+  const { reports, durationBonds, showNewReportModal, setShowNewReportModal, addComplianceReport } = useAppStore();
   const [typeFilter, setTypeFilter] = useState<string>('all');
+
+  // 新建报告表单状态
+  const [newReportForm, setNewReportForm] = useState({
+    reportName: '',
+    reportType: 'regular' as 'regular' | 'temporary' | 'special',
+    bondName: '',
+    reportPeriod: ''
+  });
 
   // 获取报告类型配置
   const getReportTypeConfig = (type: string) => {
@@ -50,6 +66,42 @@ const ReportsPage = () => {
     special: reports.filter((r) => r.reportType === 'special').length
   };
 
+  // 处理表单输入变化
+  const handleFormChange = (field: string, value: string) => {
+    setNewReportForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 使用模板快速创建
+  const handleUseTemplate = (templateName: string) => {
+    const periodMap: Record<string, string> = {
+      '季度受托管理报告': `${new Date().getFullYear()}年第${Math.floor((new Date().getMonth() + 3) / 3)}季度`,
+      '年度受托管理报告': `${new Date().getFullYear()}年度`,
+      '临时事项公告': `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`
+    };
+    setNewReportForm({
+      reportName: templateName,
+      reportType: templateName.includes('临时') ? 'temporary' : 'regular',
+      bondName: durationBonds[0]?.bondName || '',
+      reportPeriod: periodMap[templateName] || ''
+    });
+    setShowNewReportModal(true);
+  };
+
+  // 提交新建报告
+  const handleSubmitReport = () => {
+    if (!newReportForm.reportName || !newReportForm.bondName || !newReportForm.reportPeriod) {
+      alert('请填写必填项');
+      return;
+    }
+    addComplianceReport(newReportForm);
+    setNewReportForm({
+      reportName: '',
+      reportType: 'regular',
+      bondName: '',
+      reportPeriod: ''
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
@@ -58,7 +110,10 @@ const ReportsPage = () => {
           <h1 className="text-2xl font-bold text-slate-900">合规报告中心</h1>
           <p className="text-slate-500 mt-1">管理债券存续期各类合规报告，支持在线查看和下载</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
+        <button
+          onClick={() => setShowNewReportModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+        >
           <Plus className="w-5 h-5" />
           新建报告
         </button>
@@ -202,7 +257,11 @@ const ReportsPage = () => {
           ].map((template) => {
             const Icon = template.icon;
             return (
-              <div key={template.name} className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all">
+              <div
+                key={template.name}
+                onClick={() => handleUseTemplate(template.name)}
+                className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all"
+              >
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Icon className="w-5 h-5 text-blue-600" />
@@ -215,6 +274,85 @@ const ReportsPage = () => {
           })}
         </div>
       </div>
+
+      {/* 新建报告弹窗 */}
+      <Modal
+        isOpen={showNewReportModal}
+        onClose={() => setShowNewReportModal(false)}
+        title="新建合规报告"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              报告名称 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={newReportForm.reportName}
+              onChange={(e) => handleFormChange('reportName', e.target.value)}
+              placeholder="例如：2024年第一季度受托管理报告"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">报告类型</label>
+            <select
+              value={newReportForm.reportType}
+              onChange={(e) => handleFormChange('reportType', e.target.value)}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {reportTypeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              关联债券 <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={newReportForm.bondName}
+              onChange={(e) => handleFormChange('bondName', e.target.value)}
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">请选择债券</option>
+              {durationBonds.map((bond) => (
+                <option key={bond.id} value={bond.bondName}>{bond.bondName}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              报告期间 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={newReportForm.reportPeriod}
+              onChange={(e) => handleFormChange('reportPeriod', e.target.value)}
+              placeholder="例如：2024年第一季度"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setShowNewReportModal(false)}
+              className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              onClick={handleSubmitReport}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              创建报告
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

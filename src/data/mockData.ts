@@ -142,10 +142,10 @@ export const mockDurationBonds: DurationBond[] = [
 
 // 资金流水模拟数据
 const mockFundFlows: FundFlow[] = [
-  { id: 'flow-001', date: '2024-02-15', amount: 3.5, usageDescription: '项目建设工程款支付', approver: '张明', approvalStatus: 'approved', isCompliant: true },
-  { id: 'flow-002', date: '2024-02-28', amount: 2.8, usageDescription: '设备采购款项', approver: '张明', approvalStatus: 'approved', isCompliant: true },
-  { id: 'flow-003', date: '2024-03-10', amount: 1.5, usageDescription: '补充流动资金', approver: '李华', approvalStatus: 'pending', isCompliant: true },
-  { id: 'flow-004', date: '2024-03-15', amount: 4.2, usageDescription: '偿还银行贷款（待核实）', approver: '王芳', approvalStatus: 'pending', isCompliant: false }
+  { id: 'flow-001', date: '2024-02-15', amount: 3.5, usageDescription: '项目建设工程款支付', usageCategory: '项目建设', approver: '张明', approvalStatus: 'approved', isCompliant: true },
+  { id: 'flow-002', date: '2024-02-28', amount: 2.8, usageDescription: '生产设备采购款项', usageCategory: '设备采购', approver: '张明', approvalStatus: 'approved', isCompliant: true },
+  { id: 'flow-003', date: '2024-03-10', amount: 1.5, usageDescription: '补充流动资金', usageCategory: '补充流动资金', approver: '李华', approvalStatus: 'pending', isCompliant: true },
+  { id: 'flow-004', date: '2024-03-15', amount: 4.2, usageDescription: '偿还银行贷款（待核实）', usageCategory: '其他', approver: '王芳', approvalStatus: 'pending', isCompliant: false }
 ];
 
 // 募集资金模拟数据
@@ -170,8 +170,8 @@ export const mockFundRecords: FundRecord[] = [
     remainingAmount: 6.8,
     purpose: '用于污水处理厂扩建及光伏发电项目',
     fundFlows: [
-      { id: 'flow-005', date: '2024-03-05', amount: 2.0, usageDescription: '污水处理设备采购', approver: '赵伟', approvalStatus: 'approved', isCompliant: true },
-      { id: 'flow-006', date: '2024-03-20', amount: 1.2, usageDescription: '光伏项目前期费用', approver: '孙丽', approvalStatus: 'approved', isCompliant: true }
+      { id: 'flow-005', date: '2024-03-05', amount: 2.0, usageDescription: '污水处理设备采购', usageCategory: '环保设备采购', approver: '赵伟', approvalStatus: 'approved', isCompliant: true },
+      { id: 'flow-006', date: '2024-03-20', amount: 1.2, usageDescription: '光伏项目前期费用', usageCategory: '项目建设', approver: '孙丽', approvalStatus: 'approved', isCompliant: true }
     ],
     complianceStatus: 'normal'
   }

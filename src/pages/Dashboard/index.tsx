@@ -8,10 +8,10 @@ import { mockStatCards } from '../../data/mockData';
 
 // 趋势图模拟数据
 const trendData = [
-  { month: '1月', 债券数量: 22, 预警数量: 2 },
-  { month: '2月', 债券数量: 24, 预警数量: 3 },
-  { month: '3月', 债券数量: 26, 预警数量: 5 },
-  { month: '4月', 债券数量: 28, 预警数量: 6 }
+  { month: '1月', bondCount: 22, alertCount: 2 },
+  { month: '2月', bondCount: 24, alertCount: 3 },
+  { month: '3月', bondCount: 26, alertCount: 5 },
+  { month: '4月', bondCount: 28, alertCount: 6 }
 ];
 
 // 控制台首页组件
@@ -101,8 +101,8 @@ const DashboardPage = () => {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Area type="monotone" dataKey="债券数量" stroke="#3b82f6" strokeWidth={2} fill="url(#colorBonds)" />
-                <Line type="monotone" dataKey="预警数量" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
+                <Area type="monotone" dataKey="bondCount" name="债券数量" stroke="#3b82f6" strokeWidth={2} fill="url(#colorBonds)" />
+                <Line type="monotone" dataKey="alertCount" name="预警数量" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

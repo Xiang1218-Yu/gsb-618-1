@@ -12,6 +12,20 @@ const FundsPage = () => {
   // 图表颜色
   const COLORS = ['#3b82f6', '#e2e8f0'];
 
+  // 根据资金流水动态计算用途分布
+  const getUsageDistribution = () => {
+    if (!selectedFund) return [];
+    const categoryMap = new Map<string, number>();
+    selectedFund.fundFlows.forEach((flow) => {
+      const current = categoryMap.get(flow.usageCategory) || 0;
+      categoryMap.set(flow.usageCategory, current + flow.amount);
+    });
+    return Array.from(categoryMap.entries()).map(([name, value]) => ({ name, value }));
+  };
+
+  // 柱状图颜色配置
+  const barColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
   // 获取审批状态样式
   const getApprovalStatusConfig = (status: string) => {
     switch (status) {
@@ -167,17 +181,17 @@ const FundsPage = () => {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[
-                    { name: '项目建设', value: 6.3 },
-                    { name: '设备采购', value: 2.8 },
-                    { name: '补充流动资金', value: 1.5 }
-                  ]}
+                  data={getUsageDistribution()}
                   layout="vertical"
                 >
                   <XAxis type="number" unit="亿" />
-                  <YAxis type="category" dataKey="name" width={80} fontSize={12} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  <YAxis type="category" dataKey="name" width={100} fontSize={12} />
+                  <Tooltip formatter={(value: number) => [`${value}亿元`, '金额']} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {getUsageDistribution().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

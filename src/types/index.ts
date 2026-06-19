@@ -35,6 +35,7 @@ export interface FundFlow {
   date: string;                  // 日期
   amount: number;                // 金额
   usageDescription: string;      // 使用说明
+  usageCategory: string;         // 用途分类
   approver: string;              // 审批人
   approvalStatus: 'pending' | 'approved' | 'rejected'; // 审批状态
   isCompliant: boolean;          // 是否合规
